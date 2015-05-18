@@ -245,7 +245,7 @@ class Experiment(object):
             output_log_file = os.path.join(final_output_path, "output.log")
             sge_command = 'qsub -b n -V -p %d -N "%s" -wd "%s" -e "%s" -o "%s" "%s"' \
                           % (int(priority), run_name, final_output_path,
-                             error_log_file, output_log_file,
+                             'error.log', 'output.log',
                              sge_scipt_file)
 
             print_named_content('SGE Command:', sge_command)
