@@ -584,7 +584,7 @@ layer {
     scale: 0.0039215684
   }
   data_param {
-    source: "examples/mnist/mnist_train_lmdb"
+    source: "/storage/code/caffe/examples/mnist/mnist_train_lmdb"
     batch_size: ${train_batch_size}
     backend: LMDB
   }
@@ -602,7 +602,7 @@ layer {
     scale: 0.0039215684
   }
   data_param {
-    source: "examples/mnist/mnist_train_lmdb"
+    source: "/storage/code/caffe/examples/mnist/mnist_train_lmdb"
     batch_size: ${train_batch_size}
     backend: LMDB
   }
@@ -620,7 +620,7 @@ layer {
     scale: 0.0039215684
   }
   data_param {
-    source: "examples/mnist/mnist_test_lmdb"
+    source: "/storage/code/caffe/examples/mnist/mnist_test_lmdb"
     batch_size: ${test_batch_size}
     backend: LMDB
   }
