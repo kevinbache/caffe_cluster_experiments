@@ -1,0 +1,705 @@
+import glob
+import os
+import cPickle
+from time import localtime, strftime
+from string import Template
+# from pylearn2.config import yaml_parse
+# from experiments.model_utils import MonitorParser
+
+# calling experiment.run() creates these directories and files:
+#
+# data/<run_name>/
+#   algo_params.pkl -- {params: {}, algo_name: '', problem_name: ''}
+#   problem.yaml
+#   ducb.yaml
+#   final.yaml
+#   model.pkl
+#
+# experiments
+#   exp_name.txt
+#       <data dirs as lines>
+
+this_path = os.path.dirname(os.path.realpath(__file__))
+base_path = os.path.dirname(this_path)
+
+def print_named_content(name, content):
+    print '==========================================================================='
+    print name
+    print '---------------------------------------------------------------------------'
+    print content
+    print '==========================================================================='
+    print
+
+
+# to my eyes, the """ """s with newlines inside makes it cleaner to keep this outside of the class
+sge_template = Template("""
+#!/bin/bash
+"${caffe_fullfile}" train --solver="${algorithm_fullfile}" && mv "${tmp_output_path}/"* "${final_output_path}/"
+"""
+)
+
+# separators between fields; used to customize path and file name formats
+seps = {'minor': '_', 'major': '--', 'super': '----'}
+
+class Experiment(object):
+    # leave these as class variables so they can be accessed from TimeSeriesPlotter
+    default_final_output_path = os.path.join(base_path, 'output')
+    default_data_path_addon = 'data'
+    default_experiment_path_addon = 'experiments'
+    # these will be checked in order to see if the file exists at each location before use
+    default_caffe_paths = ['/storage/code/caffe/build/tools/caffe',
+                           '/Users/kevin/projects/caffe/build/tools/caffe',
+                           'caffe']
+    default_tmp_output_path = '/scratch/sgeadmin/eyes_open_runs' # used if running on sun grid engine
+    default_sge_final_output_path = '/storage/code/eyes_open/output'
+
+    # a 'run' represents a single call to train.main_loop()
+    # it is a combination of a problem, dataset, training algorithm, and hyper parameters
+    run_name_template = Template("${problem_name}"
+                                 "${major}"
+                                 "${algorithm_name}"
+                                 "${super}"
+                                 "${params}"
+                                 "${minor}"
+                                 "${device}"
+                                 "${major}"
+                                 "seed=${seed}")
+    experiment_filename_template = Template("${experiment_base_name}${super}${start_time}.txt")
+
+    # name of files that this class saves in each run's directory
+    name_problem_file = 'problem.prototxt'
+    name_algorithm_file = 'algorithm.prototxt'
+    name_names_hyper_params = 'names_and_hyper_params.pkl'
+    # name_final_yaml = 'final.yaml'
+    name_trained_model = 'trained_model.pkl'
+    # a smaller subset of trained_model.pkl for faster loading for plotting
+    trained_model_small = 'trained_model_small.pkl'
+    channels_filename = 'channels.pkl'
+
+    # year_month_day-hour_minute_second
+    time_format = Template("%Y${minor}%m${minor}%d"
+                           "${major}"
+                           "%H${minor}%M${minor}%S").safe_substitute(seps)
+
+    def __init__(self,
+                 use_sge=False,
+                 final_output_path=None,
+                 data_path=None,
+                 experiment_path=None,
+                 caffe_paths=None,
+                 tmp_output_path=None,
+                 DEBUG_MODE=False):
+
+        self.use_sge = use_sge
+        self.DEBUG_MODE = DEBUG_MODE
+
+        if final_output_path is None:
+            if self.use_sge:
+                self.final_output_path = self.default_sge_final_output_path
+            else:
+                self.final_output_path = self.default_final_output_path
+
+        if data_path is None:
+                self.data_path = os.path.join(self.final_output_path, self.default_data_path_addon)
+
+        if experiment_path is None:
+            self.experiment_path = os.path.join(self.final_output_path, self.default_experiment_path_addon)
+
+        if caffe_paths is None:
+            self.caffe_path = None
+            for p in self.default_caffe_paths:
+                if os.path.isfile(p):
+                    self.caffe_fullfile = p
+                    break
+            if self.caffe_fullfile is None:
+                raise ValueError('Could not find caffe binary at any of:', self.default_caffe_paths)
+
+        if tmp_output_path is None:
+            self.tmp_output_path = self.default_tmp_output_path
+
+        if not self.DEBUG_MODE:
+            if self.use_sge:
+                self.makedir(self.tmp_output_path)
+            self.makedir(self.final_output_path)
+            self.makedir(self.data_path)
+            self.makedir(self.experiment_path)
+
+    @staticmethod
+    def makedir(directory):
+        """ create a directory if it doesn't already exist """
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+    def get_time_str(self):
+        return strftime(self.time_format, localtime())
+
+    @staticmethod
+    def validate_run_names(run_names):
+        if len(run_names) != len(set(run_names)):
+            raise ValueError('Run names should all be unique, but run_names = \n' + '\n'.join(run_names))
+
+    def run(self, experiment_base_name, problem_template, algorithm_template, hyper_param_sets,
+            offer_compatible_runs=True, use_gpu=True, priority=0):
+        if isinstance(hyper_param_sets, dict):
+            hyper_param_sets = [hyper_param_sets,]
+
+        start_time = self.get_time_str()
+        run_names = self.compile_run_names(problem_template, algorithm_template, hyper_param_sets, start_time)
+        self.validate_run_names(run_names)
+
+        if offer_compatible_runs:
+            all_compatible_runs = self.find_compatible_runs(run_names)
+            use_runs = self.offer_compatible_runs(run_names, all_compatible_runs)
+        else:
+            all_compatible_runs = [[]] * len(run_names)
+            use_runs = [0] * len(run_names)
+
+        used_run_paths = []
+        for hyper_param_set, \
+            run_name, \
+            use_run, \
+            compatible_runs in zip(hyper_param_sets, run_names, use_runs, all_compatible_runs):
+
+            if use_run != 0:
+                # load an existing run instead of performing a new one
+                this_final_run_path = compatible_runs[use_run-1]
+            else:
+                this_final_run_path = self.get_this_final_run_path(run_name)
+                if self.use_sge:
+                    this_tmp_run_path = self.get_this_tmp_run_path(run_name)
+                else:
+                    this_tmp_run_path = this_final_run_path
+                if not self.DEBUG_MODE:
+                    self.makedir(this_final_run_path)
+                self.save_names_and_hyper_params(problem_template, algorithm_template, hyper_param_set, this_final_run_path)
+                self.save_problem_and_algorithm(problem_template, algorithm_template, hyper_param_set, this_final_run_path, this_tmp_run_path)
+
+                # perform a new run
+                self.run_one(problem_template, algorithm_template, hyper_param_set, run_name, use_gpu, priority)
+                # save problem name, algorithm name, hyperparameters and yaml files
+            used_run_paths.append(this_final_run_path)
+
+        experiment_fullfile = self.save_experiment(experiment_base_name, used_run_paths, start_time)
+        return experiment_fullfile, used_run_paths
+
+    def run_one(self, problem_template, algorithm_template, hyper_param_set, run_name, use_gpu=True, priority=0):
+        """
+        inner function for run
+        """
+        assert(isinstance(problem_template, NamedTemplate))
+        assert(isinstance(algorithm_template, NamedTemplate))
+        assert(isinstance(hyper_param_set, dict))
+
+        this_final_run_path = self.get_this_final_run_path(run_name)
+
+        device = 'gpu' if use_gpu else 'cpu'
+        contents, names = self.compile_contents_and_filenames(problem_template, algorithm_template, hyper_param_set, this_final_run_path)
+        algorithm_content = contents[-1]
+        algorithm_name = names[-1]
+        for c in contents:
+            if self._has_empty_fields(c):
+                raise ValueError('Not all fields filled in content file:\n' + c)
+        if not self.use_sge:
+            # run on local machine
+            # print '===================='
+            # print 'Starting Experiment:'
+            # print '===================='
+            print_named_content("Starting Experiment", "")
+
+            # if use_gpu and not self.use_sge:
+            #     # ref: https://groups.google.com/forum/#!topic/theano-users/woPgxXCEMB4
+            #     import theano.sandbox.cuda
+            #     theano.sandbox.cuda.use("gpu0")
+            # train = yaml_parse.load(final_content)
+            # train.main_loop()
+        else:
+            # submit to SGE
+            print_named_content('Submitting Experiment', algorithm_content)
+
+            tmp_output_path = self.get_this_tmp_run_path(run_name)
+
+            import subprocess
+            # final_yaml_file = os.path.join(this_final_run_path, self.name_final_yaml)
+
+            # subprocess.call(["qsub", self.default_sge_pylearn2_path + ' ' + final_yaml_file], shell=True)
+            # note that this also includes a command to move the final run output directory to the NFS shared path
+            d = {'device': device,
+                 'caffe_fullfile': self.caffe_fullfile,
+                 'algorithm_fullfile': algorithm_name,
+                 'tmp_output_path': tmp_output_path,
+                 'final_output_path': this_final_run_path}
+            sge_script = sge_template.safe_substitute(**d)
+            sge_scipt_file = os.path.join(this_final_run_path, "run.sh")
+
+            if self.DEBUG_MODE:
+                print_named_content(sge_scipt_file, sge_script)
+            else:
+                with open(sge_scipt_file, "w") as f:
+                    f.write(sge_script)
+
+            error_log_file = os.path.join(this_final_run_path, "error.log")
+            output_log_file = os.path.join(this_final_run_path, "output.log")
+            sge_command = 'qsub -p %d -b n -V -N "%s" -e "%s" -o "%s" -cwd "%s"' \
+                          % (int(priority), run_name, error_log_file, output_log_file, sge_scipt_file)
+
+            print_named_content('SGE Command:', sge_command)
+
+            if not self.DEBUG_MODE:
+                subprocess.call(sge_command, shell=True)
+
+    def get_this_final_run_path(self, run_name):
+        return os.path.join(self.data_path, run_name)
+
+    def get_this_tmp_run_path(self, run_name):
+        return os.path.join(self.tmp_output_path, run_name)
+
+    @staticmethod
+    def _has_empty_fields(yaml_str):
+        return '$' in yaml_str
+
+    def save_experiment(self, experiment_base_name, used_run_paths, start_time):
+        experiment_filename = self.compile_experiment_name(experiment_base_name, start_time)
+        experiment_fullfile = os.path.join(self.experiment_path, experiment_filename)
+
+        if self.DEBUG_MODE:
+            print_named_content(experiment_fullfile, '\n'.join(used_run_paths))
+        else:
+            with open(experiment_fullfile, 'w') as f:
+                for r in used_run_paths:
+                    f.write("%s\n" % r)
+            return experiment_fullfile
+
+    def read_experiment_file(self, fullfilename):
+        """
+        loads the channel files from the runs referred to in a given experiment file.
+        """
+        filename = os.path.basename(fullfilename)
+
+        if filename == fullfilename:
+            # we were only passed a filename, not a path.  load filename from the default experiment directory
+            fullfilename = os.path.join(self.experiment_path, filename)
+
+        with open(fullfilename) as f:
+            data_paths = f.read().splitlines()
+
+        experiment_name, _ = filename.split(seps['super'])
+
+        return data_paths, experiment_name
+
+    # def load_channels_from_experiment(self, filename):
+    #     """
+    #     load the channels files located in all directories in the given experiment file; return them in a Pandas Panel
+    #
+    #     :param filename: the name of the experiment file to load.  must be on the python path or be fully qualified
+    #     :rtype: Pandas.Panel
+    #     :return: a Pandas Panel in which each item as a single algorithm for the experiment file, major axis is time
+    #              slice, minor axis is channel name
+    #     """
+    #     import pandas as pd
+    #
+    #     data_paths, exp_name = self.read_experiment_file(filename)
+    #     data = {}
+    #     n_paths = len(data_paths)
+    #     for i, f in enumerate(data_paths):
+    #         print 'now loading file % 4d of % 4d: %s' % (i+1, n_paths, f)
+    #         df, alg_name = MonitorParser.load_channels(os.path.join(f, self.channels_filename))
+    #         data[alg_name] = df
+    #
+    #     return pd.Panel(data), exp_name
+
+    def compile_experiment_name(self, experiment_base_name, start_time):
+        d = seps.copy()
+        d['experiment_base_name'] = experiment_base_name
+        d['start_time'] = start_time
+        return self.experiment_filename_template.safe_substitute(d)
+
+    def compile_run_names(self, problem_template, algorithm_template, hyper_param_sets, start_time):
+        return [self.compile_run_name(problem_template, algorithm_template, p, start_time) for p in hyper_param_sets]
+
+    def compile_run_name(self, problem_template, algorithm_template, hyper_param_set, start_time):
+        problem_name = problem_template.fill_name(hyper_param_set)
+        algorithm_name = algorithm_template.fill_name(hyper_param_set)
+        params = hyper_param_set['params']
+        device = hyper_param_set['device']
+        d = seps.copy()
+        d.update(locals())
+        del d['self']
+        if 'seed' in hyper_param_set:
+            d['seed'] = hyper_param_set['seed']
+        else:
+            d['seed'] = None
+
+        return self.run_name_template.safe_substitute(**d)
+
+    def save_names_and_hyper_params(self,
+                                    problem_template, algorithm_template,
+                                    hyper_param_set, this_run_path):
+        problem_name = problem_template.fill_name(hyper_param_set)
+        algorithm_name = algorithm_template.fill_name(hyper_param_set)
+        d = hyper_param_set.copy()
+        d['problem_name'] = problem_name
+        d['algorithm_name'] = algorithm_name
+
+        hyper_param_fullfile = os.path.join(this_run_path, self.name_names_hyper_params)
+        if not self.DEBUG_MODE:
+            with open(hyper_param_fullfile, 'wb') as outfile:
+                cPickle.dump(d, outfile, protocol=cPickle.HIGHEST_PROTOCOL)
+
+    # def load_run_data(self, run_path, recreate_small_version=False):
+    #     """ load the model and algo name file from a run directory """
+    #
+    #     # save small versions
+    #     # try to load the small version, if that's not possible, or we've been ordered to recreate the small version
+    #     # no matter what,
+    #
+    #     full_model_file = os.path.join(run_path, self.name_trained_model)
+    #     small_model_file = os.path.join(run_path, self.trained_model_small)
+    #     if os.path.isfile(small_model_file) and not recreate_small_version:
+    #         model = self.load_pkl(small_model_file)
+    #     else:
+    #         model = self.load_pkl(full_model_file)
+    #         self.shrink_model(model)
+    #         self.save_pkl(small_model_file, model)
+    #     names = self.load_pkl(os.path.join(run_path, self.name_names_hyper_params))
+    #     return model, names
+
+    # @staticmethod
+    # def load_pkl(filename):
+    #     with open(filename, 'rb') as f:
+    #         model =  cPickle.load(f)
+    #     return model
+    #
+    # @staticmethod
+    # def save_pkl(filename, object):
+    #     with open(filename, 'wb') as outfile:
+    #         cPickle.dump(object, outfile, protocol=cPickle.HIGHEST_PROTOCOL)
+
+    def save_problem_and_algorithm(self, problem_template, algorithm_template, hyper_param_set, final_run_path, tmp_run_path):
+        contents, save_filenames = \
+            self.compile_contents_and_filenames(problem_template, algorithm_template,
+                                                hyper_param_set, final_run_path)
+
+        for content, filename in zip(contents, save_filenames):
+            if self.DEBUG_MODE:
+                print_named_content(filename, content)
+            else:
+                with open(filename, 'w') as outfile:
+                    outfile.write(content)
+
+    def compile_contents_and_filenames(self, problem_template, algorithm_template, hyper_param_set, this_run_path):
+        # caffe only needs the algorithm content to know the problem file's path but including
+        # both here for both
+        d = hyper_param_set.copy()
+        d['problem_fullfile'] = os.path.join(this_run_path, self.name_problem_file)
+        d['algorithm_fullfile'] = os.path.join(this_run_path, self.name_algorithm_file)
+
+        contents = [problem_template.fill_content(d)]
+        contents += [algorithm_template.fill_content(d)]
+
+        names = [d['problem_fullfile'], d['algorithm_fullfile']]
+
+        return contents, names
+
+    # def compile_yamls(self, problem_template, algorithm_template, hyper_param_sets):
+    #     return [self.compile_contents_and_filenames(problem_template, algorithm_template, p) for p in hyper_param_sets]
+
+    @staticmethod
+    def glob_escape(in_str):
+        """ escape a string so that it can be used in glob.glob """
+        special_chars = ['?', '*', '[',]
+        for c in special_chars:
+            in_str = in_str.replace(c, '[%s]'%c)
+        return in_str
+
+    @classmethod
+    def compatible_name(cls, run_name):
+        """
+        return the base of this run_name for finding compatible runs.
+        the base is the run_name without the random seed and date/time info
+
+        2014.11.24:
+        changing this to care about seed too.  date/time has already been eliminated
+        so this means the only compatible run name will be your exact run name
+        """
+        # compatible_name, _ = run_name.split(seps['super'])
+        return run_name
+
+    def find_compatible_run(self, run_name):
+        """
+        2014.11.24:
+        changing this to look for directories with both trained model files in them since on SGE i now create the
+        directories before running all jobs but the trained model only gets copied back once the entire run completes
+        successfully
+        still returns the run path without self.name_trained_model appended as it did before
+        """
+        compatible_name = self.compatible_name(run_name)
+        search_str = self.glob_escape(os.path.join(self.data_path, compatible_name, self.name_trained_model))
+        # yes, this should be append not extend.  we're returning a list of lists
+        compatible_trained_models = glob.glob(search_str)
+        compatible_runs = [os.path.dirname(f) for f in compatible_trained_models]
+        return compatible_runs
+
+    def find_compatible_runs(self, run_names):
+        return [self.find_compatible_run(n) for n in run_names]
+
+    def offer_compatible_runs(self, run_names, all_compatible_runs):
+        print ' '
+        print 'Compatible runs:'
+        default_choices = self._print_compatible_choices(run_names, all_compatible_runs)
+        if all(c == 0 for c in default_choices):
+            print 'No compatible runs located'
+            choices = default_choices
+        else:
+            print 'Compatible runs located for one or more runs in this experiment.'
+            print 'Do you want to use any of them in place of creating a new run?'
+            print 'Enter a list of with your choice for each run.  An entry of 0 in the list means to make a new run'
+            print 'for that setting rather than to use an existing one.  Instead of a list, you can also just input'
+            print 'the single number 0 to use none of the existing runs and create all new ones instead.'
+            print ' '
+            try:
+                choices = input('CHOICES, default=%s: ' % default_choices)
+            except SyntaxError:
+                choices = default_choices
+            if choices == 0:
+                choices = [0] * len(run_names)
+        print 'Accepting choices:', choices
+        return choices
+
+    def _print_compatible_choices(self, run_names, all_compatible_runs):
+        default_choices = [0] * len(run_names)
+        for i, (r, crs) in enumerate(zip(run_names, all_compatible_runs)):
+            compatible_name = self.compatible_name(r)
+            print i, compatible_name
+            default_choices[i] = len(crs)  # choose the longest running by default
+            for j, c in enumerate(crs):
+                print '  ', j+1, c
+            print ' '
+        return default_choices
+
+    @staticmethod
+    def shrink_model(model):
+        """
+        delete the large attributes of a pylearn2 model in place.
+        the new version is quicker to load/save and still has all the information i want for plotting
+        """
+        del model.layers
+
+class NamedTemplate(object):
+    """ named template """
+    def __init__(self, name_template, content_template):
+        self._name_template = self._validate_template(name_template)
+        self._content_template = self._validate_template(content_template)
+
+    @staticmethod
+    def _validate_template(template):
+        if isinstance(template, Template):
+            return template
+        elif isinstance(template, str):
+            return Template(template)
+        else:
+            raise ValueError('template must be either a str or a Template object')
+
+    def fill(self, hyper_params):
+        return self.fill_name(hyper_params), self.fill_content(hyper_params)
+
+    def fill_name(self, hyper_params):
+        return self._name_template.safe_substitute(hyper_params)
+
+    def fill_content(self, hyper_params):
+        content = self._content_template.safe_substitute(hyper_params)
+        # if self.has_unfilled_fields(content):
+        #     content = Template(content)
+        return content
+
+    @property
+    def content_template(self):
+        return self._content_template.template
+
+    @property
+    def name_template(self):
+        return self._name_template.template
+
+
+    # @staticmethod
+    # def has_unfilled_fields(string):
+    #     return '${' in string
+
+
+# helper functions for constructing settings dictionaries
+def cross_dict(params_to_cross_dict):
+    """
+    take the cross product of the parameters in params_to_cross_dict.
+
+    :param dict params_to_cross_dict: each key is a parameter name, each value is an iterable of parameter values
+    :return: a list of dictionaries, each of which one set of of k:v pairs from the cross product of all options
+             in params_to_cross_dict
+    :rtype: [dict]
+    """
+    import itertools
+    ks = params_to_cross_dict.keys()
+    params_to_cross = params_to_cross_dict.values()
+    param_sets = itertools.product(*params_to_cross)
+
+    out_dicts = []
+    for param_set in param_sets:
+        o = {k: v for k, v in zip(ks, param_set)}
+        out_dicts.append(o)
+
+    return out_dicts
+
+def append_dicts(base_dict, dicts_to_append):
+    """
+    append update base_dict with each dict in dicts_to_append
+    :param dict base_dict: the starting dictionary to be updated
+    :param list(dict) dicts_to_append: n dicts, each of which will update base_dict in turn
+    :return: list of n dicts, each of which is base_dict updated with one dict from dicts_to_append
+    :rtype: list(dict)
+    """
+    if isinstance(dicts_to_append, dict):
+        dicts_to_append = (dicts_to_append,)
+
+    out_dicts = []
+    for d in dicts_to_append:
+        o = base_dict.copy()
+        o.update(d)
+        out_dicts.append(o)
+
+    return out_dicts
+
+# for the test at the bottom
+problem_content_template_str = \
+"""
+!obj:pylearn2.train.Train {
+    dataset: &train !obj:pylearn2.datasets.mnist.MNIST {
+        which_set: 'train',
+        one_hot: 1,
+        start: 0,
+        stop: ${n_train},
+    },
+    model: !obj:pylearn2.models.mlp.MLP {
+        layers: [
+                 !obj:pylearn2.models.mlp.Sigmoid {
+                     layer_name: 'h0',
+                     dim: ${n_h0},
+                     sparse_init: 15,
+                 }, !obj:pylearn2.models.mlp.Softmax {
+                     layer_name: 'y',
+                     n_classes: 10,
+                     irange: 0.
+                 }
+                ],
+        nvis: 784,
+        seed: ${seed},
+    },
+    ${algorithm_content}
+    extensions: [
+        !obj:pylearn2.train_extensions.best_params.MonitorBasedSaveBest {
+             channel_name: 'valid_y_misclass',
+             save_path: "${run_path}/mlp_best.pkl"
+        },
+    ],
+    save_path: "${run_path}/${name_trained_model}",
+    save_freq: ${save_freq},
+}
+"""
+problem_name_template_str = "MNIST(ntrain=${n_train})-MLP_2L(n_h0=${n_h0})"
+
+algorithm_content_template_str = \
+"""
+    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
+        batch_size: ${batch_size},
+        learning_rate: ${learning_rate},
+        learning_rule: !obj:pylearn2.training_algorithms.learning_rule.Momentum {
+            init_momentum: ${init_momentum},
+        },
+        monitoring_dataset:
+            {
+                'train' : *train,
+                'valid' : !obj:pylearn2.datasets.mnist.MNIST {
+                              which_set: 'train',
+                              one_hot: 1,
+                              start: 50000,
+                              stop: 50500,
+                          },
+                'test'  : !obj:pylearn2.datasets.mnist.MNIST {
+                              which_set: 'test',
+                              one_hot: 1,
+                          }
+            },
+        termination_criterion: !obj:pylearn2.termination_criteria.EpochCounter {
+            max_epochs: ${n_epochs},
+        },
+    },
+"""
+algorithm_name_template_str = "SGD(batch=${batch_size}_lr=${learning_rate}_rho=${init_momentum}_nepochs=${n_epochs})"
+
+
+def _test_run_offer():
+    """
+    putting this here because it requires human intervention so can't go in tests
+
+    you can run it and make sure that it uses the runs you tell it to and makes new runs when it's supposed to.
+    the run choice prompt describes what it's suppsed to do pretty well
+
+    if it doesn't find any compatible runs, though, it will just skip that screen.  you can just run the same thing
+    twice to see it in action.
+    """
+    base_params = {'n_train': 10000,
+                   'n_h0': 12,
+                   'save_freq': 1,
+                   'batch_size': 100,
+                   'init_momentum': .5,
+                   'n_epochs': 2,
+    }
+    d = { 'learning_rate': [0.1, 0.01], 'seed': [4, 5] }
+    ds = cross_dict(d)
+    hyper_param_sets = append_dicts(base_params, ds)
+
+    experiment_name = 'TEST_EXPERIMENT'
+    e = Experiment()
+    problem_template = NamedTemplate(problem_name_template_str, problem_content_template_str)
+    algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_content_template_str)
+
+    experiment_fullfile, used_run_paths = \
+        e.run(experiment_name, problem_template, algorithm_template, hyper_param_sets, offer_compatible_runs=True)
+
+    # ensure that correct files were created
+    assert os.path.exists(experiment_fullfile)
+    expected_files = [e.name_algorithm_file,
+                      e.name_problem_file,
+                      e.name_names_hyper_params,
+                      e.name_trained_model,
+                      ]
+    for run_path in used_run_paths:
+        assert os.path.exists(run_path)
+        for f in expected_files:
+            assert os.path.exists(os.path.join(run_path, f))
+
+
+if __name__ == '__main__':
+    base_params = {'n_h0': 120, 'seed': 8}
+    d = {'step_size': [1, 0.01], 'params': ['these_are_params'], 'device': 'gpu'}
+    ds = cross_dict(d)
+    hyper_param_sets = append_dicts(base_params, ds)
+
+    problem_name = Template('MNIST_MPL(h0=${n_h0})')
+    problem_content = Template('PROBLEM CONTENT.  h0=${n_h0}')
+    algorithm_name = Template('SGD(a=${step_size})')
+    algorithm_content = Template('Net: ${problem_fullfile}; Other: Woot!.; stepsize: ${step_size}')
+
+    problem_template = NamedTemplate(problem_name, problem_content)
+    algorithm_template = NamedTemplate(algorithm_name, algorithm_content)
+
+    experiment_base_name = 'EXP-BASE-NAME'
+
+    e = Experiment(use_sge=True, DEBUG_MODE=True)
+    e.run(experiment_base_name, problem_template, algorithm_template, hyper_param_sets,
+          offer_compatible_runs=False, use_gpu=True)
+    # start_time = e.get_time_str()
+    # run_names = e.compile_run_names(problem_template, algorithm_template, hyper_param_sets, start_time)
+    # print 'RUN NAMES:'
+    # for r in run_names:
+    #     print r
+
+    # _test_run_offer()
+

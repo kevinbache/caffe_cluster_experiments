@@ -1,0 +1,25 @@
+net: "problem.prototxt"
+
+test_state: { stage: 'test-on-train' }
+test_iter: ${n_train_on_test_iters}
+test_state: { stage: 'test-on-test' }
+test_iter: ${n_test_on_test_iters}
+
+test_interval: ${n_iters_before_test}
+test_compute_loss: true
+
+base_lr: 0.01
+lr_policy: "fixed"
+momentum: 0.9
+#gamma: 0.1
+#stepsize: 10000
+
+display: 100
+max_iter: ${n_max_iters}
+snapshot: ${n_iters_before_snapshot}
+snapshot_prefix: ${snapshot_prefix}
+# solver mode: CPU or GPU
+solver_mode: GPU
+solver_type: SGD
+
+random_seed: 1
