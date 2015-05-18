@@ -3,6 +3,8 @@ import os
 import cPickle
 from time import localtime, strftime
 from string import Template
+import subprocess
+
 # from pylearn2.config import yaml_parse
 # from experiments.model_utils import MonitorParser
 
@@ -218,11 +220,11 @@ class Experiment(object):
             # train.main_loop()
         else:
             # submit to SGE
-            print_named_content('Submitting Experiment:', algorithm_content)
+            print_named_content('Problem:', problem_content)
+            print_named_content('Algorithm:', algorithm_content)
 
             tmp_output_path = self.get_this_tmp_run_path(run_name)
 
-            import subprocess
             # final_yaml_file = os.path.join(final_output_path, self.name_final_yaml)
 
             d = {'device': device,
@@ -752,7 +754,7 @@ momentum: ${momentum}
 display: ${n_iters_before_display}
 max_iter: ${n_max_iters}
 snapshot: ${n_iters_before_snapshot}
-snapshot_prefix: ${run_path}/snapshot
+snapshot_prefix: "${run_path}/snapshot"
 # solver mode: CPU or GPU
 solver_mode: GPU
 solver_type: SGD
