@@ -44,14 +44,15 @@ seps = {'minor': '_', 'major': '--', 'super': '----'}
 class Experiment(object):
     # leave these as class variables so they can be accessed from TimeSeriesPlotter
     default_final_output_path = os.path.join(base_path, 'output')
-    default_data_path_addon = 'data'
+    default_tmp_output_path = '/scratch/sgeadmin/output/' # used if running on sun grid engine
+    default_sge_final_output_path = '/storage/code/runs/output'
+
+    default_data_path_addon = 'runs'
     default_experiment_path_addon = 'experiments'
     # these will be checked in order to see if the file exists at each location before use
     default_caffe_paths = ['/storage/code/caffe/build/tools/caffe',
                            '/Users/kevin/projects/caffe/build/tools/caffe',
                            'caffe']
-    default_tmp_output_path = '/scratch/sgeadmin/eyes_open_runs' # used if running on sun grid engine
-    default_sge_final_output_path = '/storage/code/eyes_open/output'
 
     # a 'run' represents a single call to train.main_loop()
     # it is a combination of a problem, dataset, training algorithm, and hyper parameters
@@ -182,7 +183,9 @@ class Experiment(object):
         experiment_fullfile = self.save_experiment(experiment_base_name, used_run_paths, start_time)
         return experiment_fullfile, used_run_paths
 
-    def run_one(self, problem_template, algorithm_template, hyper_param_set, run_name, use_gpu=True, priority=0):
+    def run_one(self,
+                problem_template, algorithm_template,
+                hyper_param_set, run_name, use_gpu=True, priority=0):
         """
         inner function for run
         """
@@ -190,10 +193,10 @@ class Experiment(object):
         assert(isinstance(algorithm_template, NamedTemplate))
         assert(isinstance(hyper_param_set, dict))
 
-        this_final_run_path = self.get_this_final_run_path(run_name)
+        final_output_path = self.get_this_final_run_path(run_name)
 
         device = 'gpu' if use_gpu else 'cpu'
-        contents, names = self.compile_contents_and_filenames(problem_template, algorithm_template, hyper_param_set, this_final_run_path)
+        contents, names = self.compile_contents_and_filenames(problem_template, algorithm_template, hyper_param_set, final_output_path)
         algorithm_content = contents[-1]
         algorithm_name = names[-1]
         for c in contents:
@@ -219,17 +222,15 @@ class Experiment(object):
             tmp_output_path = self.get_this_tmp_run_path(run_name)
 
             import subprocess
-            # final_yaml_file = os.path.join(this_final_run_path, self.name_final_yaml)
+            # final_yaml_file = os.path.join(final_output_path, self.name_final_yaml)
 
-            # subprocess.call(["qsub", self.default_sge_pylearn2_path + ' ' + final_yaml_file], shell=True)
-            # note that this also includes a command to move the final run output directory to the NFS shared path
             d = {'device': device,
                  'caffe_fullfile': self.caffe_fullfile,
                  'algorithm_fullfile': algorithm_name,
                  'tmp_output_path': tmp_output_path,
-                 'final_output_path': this_final_run_path}
+                 'final_output_path': final_output_path}
             sge_script = sge_template.safe_substitute(**d)
-            sge_scipt_file = os.path.join(this_final_run_path, "run.sh")
+            sge_scipt_file = os.path.join(final_output_path, "run.sh")
 
             if self.DEBUG_MODE:
                 print_named_content(sge_scipt_file, sge_script)
@@ -237,8 +238,8 @@ class Experiment(object):
                 with open(sge_scipt_file, "w") as f:
                     f.write(sge_script)
 
-            error_log_file = os.path.join(this_final_run_path, "error.log")
-            output_log_file = os.path.join(this_final_run_path, "output.log")
+            error_log_file = os.path.join(final_output_path, "error.log")
+            output_log_file = os.path.join(final_output_path, "output.log")
             sge_command = 'qsub -p %d -b n -V -N "%s" -e "%s" -o "%s" -cwd "%s"' \
                           % (int(priority), run_name, error_log_file, output_log_file, sge_scipt_file)
 
@@ -386,12 +387,15 @@ class Experiment(object):
                 with open(filename, 'w') as outfile:
                     outfile.write(content)
 
-    def compile_contents_and_filenames(self, problem_template, algorithm_template, hyper_param_set, this_run_path):
+    def compile_contents_and_filenames(self,
+                                       problem_template, algorithm_template,
+                                       hyper_param_set, this_run_path):
         # caffe only needs the algorithm content to know the problem file's path but including
         # both here for both
         d = hyper_param_set.copy()
         d['problem_fullfile'] = os.path.join(this_run_path, self.name_problem_file)
         d['algorithm_fullfile'] = os.path.join(this_run_path, self.name_algorithm_file)
+        d['run_path'] = this_run_path
 
         contents = [problem_template.fill_content(d)]
         contents += [algorithm_template.fill_content(d)]
@@ -400,15 +404,12 @@ class Experiment(object):
 
         return contents, names
 
-    # def compile_yamls(self, problem_template, algorithm_template, hyper_param_sets):
-    #     return [self.compile_contents_and_filenames(problem_template, algorithm_template, p) for p in hyper_param_sets]
-
     @staticmethod
     def glob_escape(in_str):
         """ escape a string so that it can be used in glob.glob """
-        special_chars = ['?', '*', '[',]
+        special_chars = ['?', '*', '[']
         for c in special_chars:
-            in_str = in_str.replace(c, '[%s]'%c)
+            in_str = in_str.replace(c, '[%s]' % c)
         return in_str
 
     @classmethod
@@ -566,73 +567,197 @@ def append_dicts(base_dict, dicts_to_append):
 
     return out_dicts
 
-# for the test at the bottom
-problem_content_template_str = \
-"""
-!obj:pylearn2.train.Train {
-    dataset: &train !obj:pylearn2.datasets.mnist.MNIST {
-        which_set: 'train',
-        one_hot: 1,
-        start: 0,
-        stop: ${n_train},
-    },
-    model: !obj:pylearn2.models.mlp.MLP {
-        layers: [
-                 !obj:pylearn2.models.mlp.Sigmoid {
-                     layer_name: 'h0',
-                     dim: ${n_h0},
-                     sparse_init: 15,
-                 }, !obj:pylearn2.models.mlp.Softmax {
-                     layer_name: 'y',
-                     n_classes: 10,
-                     irange: 0.
-                 }
-                ],
-        nvis: 784,
-        seed: ${seed},
-    },
-    ${algorithm_content}
-    extensions: [
-        !obj:pylearn2.train_extensions.best_params.MonitorBasedSaveBest {
-             channel_name: 'valid_y_misclass',
-             save_path: "${run_path}/mlp_best.pkl"
-        },
-    ],
-    save_path: "${run_path}/${name_trained_model}",
-    save_freq: ${save_freq},
+problem_content_template = Template("""
+name: "MNIST_500-300_sigmoid_softmax"
+layer {
+  name: "data"
+  type: "Data"
+  top: "data"
+  top: "label"
+  include {
+    phase: TRAIN
+  }
+  transform_param {
+    scale: 0.0039215684
+  }
+  data_param {
+    source: "examples/mnist/mnist_train_lmdb"
+    batch_size: ${train_batch_size}
+    backend: LMDB
+  }
 }
-"""
-problem_name_template_str = "MNIST(ntrain=${n_train})-MLP_2L(n_h0=${n_h0})"
+layer {
+  name: "data"
+  type: "Data"
+  top: "data"
+  top: "label"
+  include {
+    phase: TEST
+    stage: "test-on-train"
+  }
+  transform_param {
+    scale: 0.0039215684
+  }
+  data_param {
+    source: "examples/mnist/mnist_train_lmdb"
+    batch_size: ${train_batch_size}
+    backend: LMDB
+  }
+}
+layer {
+  name: "data"
+  type: "Data"
+  top: "data"
+  top: "label"
+  include {
+    phase: TEST
+    stage: "test-on-test"
+  }
+  transform_param {
+    scale: 0.0039215684
+  }
+  data_param {
+    source: "examples/mnist/mnist_test_lmdb"
+    batch_size: ${test_batch_size}
+    backend: LMDB
+  }
+}
+layer {
+  name: "h0_ip"
+  type: "InnerProduct"
+  bottom: "data"
+  top: "h0_ip"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: ${n_neurons_h0}
+    weight_filler {
+      type: "gaussian"
+      std: .01
+      sparse: 50
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "h0"
+  type: "Sigmoid"
+  bottom: "h0_ip"
+  top: "h0"
+}
+layer {
+  name: "h1_ip"
+  type: "InnerProduct"
+  bottom: "h0"
+  top: "h1_ip"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: ${n_neurons_h1}
+    weight_filler {
+      type: "gaussian"
+      std: .01
+      sparse: 30
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "h1"
+  type: "Sigmoid"
+  bottom: "h1_ip"
+  top: "h1"
+}
+layer {
+  name: "y_ip"
+  type: "InnerProduct"
+  bottom: "h1"
+  top: "y_ip"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 10
+    weight_filler {
+      type: "gaussian"
+      std: .01
+      sparse: 0
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "y_ip"
+  bottom: "label"
+  top: "accuracy"
+  include {
+    phase: TEST
+  }
+}
+layer {
+  name: "loss"
+  type: "SoftmaxWithLoss"
+  bottom: "y_ip"
+  bottom: "label"
+  top: "loss"
+}
+""")
 
-algorithm_content_template_str = \
-"""
-    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
-        batch_size: ${batch_size},
-        learning_rate: ${learning_rate},
-        learning_rule: !obj:pylearn2.training_algorithms.learning_rule.Momentum {
-            init_momentum: ${init_momentum},
-        },
-        monitoring_dataset:
-            {
-                'train' : *train,
-                'valid' : !obj:pylearn2.datasets.mnist.MNIST {
-                              which_set: 'train',
-                              one_hot: 1,
-                              start: 50000,
-                              stop: 50500,
-                          },
-                'test'  : !obj:pylearn2.datasets.mnist.MNIST {
-                              which_set: 'test',
-                              one_hot: 1,
-                          }
-            },
-        termination_criterion: !obj:pylearn2.termination_criteria.EpochCounter {
-            max_epochs: ${n_epochs},
-        },
-    },
-"""
-algorithm_name_template_str = "SGD(batch=${batch_size}_lr=${learning_rate}_rho=${init_momentum}_nepochs=${n_epochs})"
+algorithm_content_template = Template("""
+net: "${problem_fullfile}"
 
+test_state: { stage: 'test-on-train' }
+test_iter: ${n_test_on_train_iters}
+test_state: { stage: 'test-on-test' }
+test_iter: ${n_test_on_test_iters}
+
+test_interval: ${n_iters_before_test}
+test_compute_loss: true
+
+base_lr: ${alpha}
+lr_policy: "fixed"
+momentum: ${momentum}
+#gamma: 0.1
+#stepsize: 10000
+
+display: ${n_iters_before_display}
+max_iter: ${n_max_iters}
+snapshot: ${n_iters_before_snapshot}
+snapshot_prefix: ${run_path}/snapshot
+# solver mode: CPU or GPU
+solver_mode: GPU
+solver_type: SGD
+
+random_seed: ${seed}
+""")
 
 def _test_run_offer():
     """
@@ -660,7 +785,7 @@ def _test_run_offer():
     problem_template = NamedTemplate(problem_name_template_str, problem_content_template_str)
     algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_content_template_str)
 
-    experiment_fullfile, used_run_paths = \
+    experiment_fullfile, used_paths = \
         e.run(experiment_name, problem_template, algorithm_template, hyper_param_sets, offer_compatible_runs=True)
 
     # ensure that correct files were created
@@ -677,20 +802,42 @@ def _test_run_offer():
 
 
 if __name__ == '__main__':
-    base_params = {'n_h0': 120, 'seed': 8}
-    d = {'step_size': [1, 0.01], 'params': ['these_are_params'], 'device': 'gpu'}
+    batch_size = 100
+    n_data_train = 60000
+    n_data_test = 10000
+
+    n_iter_train = n_data_train / batch_size
+    n_epochs = 100
+
+    base_params = {
+        'train_batch_size': batch_size,
+        'test_batch_size': batch_size,
+        'n_test_on_train_iters': n_iter_train,
+        'n_test_on_test_iters': n_data_test / batch_size,
+        'n_iters_before_test': n_iter_train,
+        'n_neurons_h0': 300,
+        'n_neurons_h1': 500,
+        'seed': 8,
+        'n_iters_before_display': 100,
+        'n_max_iters': n_iter_train * n_epochs,
+        'n_iters_before_snapshot': n_iter_train,
+    }
+    d = {'alpha': [0.1, 0.01],
+         'momentum': [.5],
+         'params': ['these_are_params'],
+         'device': ['gpu']}
     ds = cross_dict(d)
     hyper_param_sets = append_dicts(base_params, ds)
 
-    problem_name = Template('MNIST_MPL(h0=${n_h0})')
-    problem_content = Template('PROBLEM CONTENT.  h0=${n_h0}')
-    algorithm_name = Template('SGD(a=${step_size})')
-    algorithm_content = Template('Net: ${problem_fullfile}; Other: Woot!.; stepsize: ${step_size}')
+    problem_content = problem_content_template
+    algorithm_content = algorithm_content_template
+    problem_name = Template('MNIST_MPL(${n_neurons_h0}, ${n_neurons_h1})')
+    algorithm_name = Template('SGD(a=${alpha}), m=${momentum}')
 
     problem_template = NamedTemplate(problem_name, problem_content)
     algorithm_template = NamedTemplate(algorithm_name, algorithm_content)
 
-    experiment_base_name = 'EXP-BASE-NAME'
+    experiment_base_name = 'TEST-EXPERIMENT'
 
     e = Experiment(use_sge=True, DEBUG_MODE=True)
     e.run(experiment_base_name, problem_template, algorithm_template, hyper_param_sets,
