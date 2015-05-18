@@ -23,11 +23,12 @@ this_path = os.path.dirname(os.path.realpath(__file__))
 base_path = os.path.dirname(this_path)
 
 def print_named_content(name, content):
-    print '==========================================================================='
+    print '========================================================================================'
+    print '========================================================================================'
     print name
-    print '---------------------------------------------------------------------------'
+    print '----------------------------------------------------------------------------------------'
     print content
-    print '==========================================================================='
+    print '========================================================================================'
     print
 
 
@@ -217,7 +218,7 @@ class Experiment(object):
             # train.main_loop()
         else:
             # submit to SGE
-            print_named_content('Submitting Experiment', algorithm_content)
+            print_named_content('Submitting Experiment:', algorithm_content)
 
             tmp_output_path = self.get_this_tmp_run_path(run_name)
 
@@ -839,7 +840,7 @@ if __name__ == '__main__':
 
     experiment_base_name = 'TEST-EXPERIMENT'
 
-    e = Experiment(use_sge=True, DEBUG_MODE=True)
+    e = Experiment(use_sge=True, DEBUG_MODE=False)
     e.run(experiment_base_name, problem_template, algorithm_template, hyper_param_sets,
           offer_compatible_runs=False, use_gpu=True)
     # start_time = e.get_time_str()
