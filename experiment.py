@@ -233,7 +233,9 @@ class Experiment(object):
                  'tmp_output_path': tmp_output_path,
                  'final_output_path': final_output_path}
             sge_script = sge_template.safe_substitute(**d)
-            sge_scipt_file = os.path.join(final_output_path, "run.sh")
+
+            sge_script_name = 'run.sh'
+            sge_scipt_file = os.path.join(final_output_path, sge_script_name)
 
             if self.DEBUG_MODE:
                 print_named_content(sge_scipt_file, sge_script)
@@ -241,12 +243,11 @@ class Experiment(object):
                 with open(sge_scipt_file, "w") as f:
                     f.write(sge_script)
 
-            error_log_file = os.path.join(final_output_path, "error.log")
-            output_log_file = os.path.join(final_output_path, "output.log")
+            # error_log_file = os.path.join(final_output_path, "error.log")
+            # output_log_file = os.path.join(final_output_path, "output.log")
             sge_command = 'qsub -b n -V -p %d -N "%s" -wd "%s" -e "%s" -o "%s" "%s"' \
                           % (int(priority), run_name, final_output_path,
-                             'error.log', 'output.log',
-                             sge_scipt_file)
+                             'error.log', 'output.log', sge_script_name)
 
             print_named_content('SGE Command:', sge_command)
 
