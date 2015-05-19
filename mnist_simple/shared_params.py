@@ -57,7 +57,9 @@ n_data_train = 60000
 n_data_test = 10000
 
 assert not n_data_train % batch_size
+assert not n_data_test % batch_size
 n_iters_per_epoch = int(n_data_train / batch_size)
+n_iters_per_test = int(n_data_test / batch_size)
 n_epochs = 500
 
 experiment_base_name = 'TEST-EXPERIMENT'
@@ -77,7 +79,7 @@ hyper_params = {
     'train_batch_size': batch_size,
     'test_batch_size': batch_size,
     'n_test_on_train_iters': n_iters_per_epoch,
-    'n_test_on_test_iters': n_data_test / batch_size,
+    'n_test_on_test_iters': n_iters_per_test,
 
     'n_iters_before_display': 100,
     'n_iters_before_test': n_iters_per_epoch,
