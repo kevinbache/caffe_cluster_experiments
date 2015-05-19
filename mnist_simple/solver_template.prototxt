@@ -1,7 +1,7 @@
 net: "${problem_fullfile}"
 
 test_state: { stage: 'test-on-train' }
-test_iter: ${n_train_on_test_iters}
+test_iter: ${n_test_on_train_iters}
 test_state: { stage: 'test-on-test' }
 test_iter: ${n_test_on_test_iters}
 
@@ -17,7 +17,7 @@ momentum: ${momentum}
 display: ${n_iters_before_display}
 max_iter: ${n_max_iters}
 snapshot: ${n_iters_before_snapshot}
-snapshot_prefix: ${snapshot_prefix}
+snapshot_prefix: "${tmp_output_path}/snapshot"
 # solver mode: CPU or GPU
 solver_mode: GPU
 solver_type: SGD

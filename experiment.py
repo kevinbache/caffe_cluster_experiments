@@ -21,7 +21,7 @@ def print_named_content(name, content):
 # to my eyes, the """ """s with newlines inside makes it cleaner to keep this outside of the class
 sge_template = Template("""
 #!/bin/bash
-"${caffe_fullfile}" train --solver="${algorithm_fullfile}" && mv "${tmp_output_path}/"* "${final_output_path}/"
+"${caffe_binary_fullfile}" train --solver="${algorithm_fullfile}" && mv "${tmp_output_path}/"* "${final_output_path}/"
 """
 )
 
@@ -37,9 +37,9 @@ class Experiment(object):
     default_data_path_addon = 'runs'
     default_experiment_path_addon = 'experiments'
     # these will be checked in order to see if the file exists at each location before use
-    default_caffe_paths = ['/storage/code/caffe/build/tools/caffe',
-                           '/Users/kevin/projects/caffe/build/tools/caffe',
-                           'caffe']
+    default_caffe_roots = ['/storage/code/caffe/',
+                           '/Users/kevin/projects/caffe/']
+    default_caffe_bin_addon = 'build/tools/caffe'
 
     # a 'run' represents a single call to train.main_loop()
     # it is a combination of a problem, dataset, training algorithm, and hyper parameters
@@ -48,8 +48,6 @@ class Experiment(object):
                                  "${algorithm_name}"
                                  "${super}"
                                  "${params}"
-                                 "${minor}"
-                                 "${device}"
                                  "${major}"
                                  "seed=${seed}")
     experiment_filename_template = Template("${experiment_base_name}${super}${start_time}.txt")
@@ -94,12 +92,15 @@ class Experiment(object):
             self.experiment_path = os.path.join(self.final_output_path, self.default_experiment_path_addon)
 
         if caffe_paths is None:
-            self.caffe_path = None
-            for p in self.default_caffe_paths:
-                if os.path.isfile(p):
-                    self.caffe_fullfile = p
+            self.caffe_binary_fullfile = None
+            self.caffe_root = None
+            for p in self.default_caffe_roots:
+                caffe_fullfile = os.path.join(p, self.default_caffe_bin_addon)
+                if os.path.isfile(caffe_fullfile):
+                    self.caffe_binary_fullfile = caffe_fullfile
+                    self.caffe_root = p
                     break
-            if self.caffe_fullfile is None:
+            if self.caffe_binary_fullfile is None:
                 raise ValueError('Could not find caffe binary at any of:', self.default_caffe_paths)
 
         if tmp_output_path is None:
@@ -127,7 +128,7 @@ class Experiment(object):
             raise ValueError('Run names should all be unique, but run_names = \n' + '\n'.join(run_names))
 
     def run(self, experiment_base_name, problem_template, algorithm_template, hyper_param_sets,
-            offer_compatible_runs=True, use_gpu=True, priority=0):
+            offer_compatible_runs=True, priority=0):
         if isinstance(hyper_param_sets, dict):
             hyper_param_sets = [hyper_param_sets,]
 
@@ -150,29 +151,29 @@ class Experiment(object):
 
             if use_run != 0:
                 # load an existing run instead of performing a new one
-                this_final_run_path = compatible_runs[use_run-1]
+                final_output_path = compatible_runs[use_run-1]
             else:
-                this_final_run_path = self.get_this_final_run_path(run_name)
+                final_output_path = self.get_this_final_run_path(run_name)
                 if self.use_sge:
-                    this_tmp_run_path = self.get_this_tmp_run_path(run_name)
+                    tmp_output_path = self.get_this_tmp_run_path(run_name)
                 else:
-                    this_tmp_run_path = this_final_run_path
+                    tmp_output_path = final_output_path
                 if not self.DEBUG_MODE:
-                    self.makedir(this_final_run_path)
-                self.save_names_and_hyper_params(problem_template, algorithm_template, hyper_param_set, this_final_run_path)
-                self.save_problem_and_algorithm(problem_template, algorithm_template, hyper_param_set, this_final_run_path, this_tmp_run_path)
+                    self.makedir(final_output_path)
+                self.save_names_and_hyper_params(problem_template, algorithm_template, hyper_param_set, final_output_path)
+                self.save_problem_and_algorithm(problem_template, algorithm_template, hyper_param_set, final_output_path, tmp_output_path)
 
                 # perform a new run
-                self.run_one(problem_template, algorithm_template, hyper_param_set, run_name, use_gpu, priority)
+                self.run_one(problem_template, algorithm_template, hyper_param_set, run_name, final_output_path, tmp_output_path, priority)
                 # save problem name, algorithm name, hyperparameters and yaml files
-            used_run_paths.append(this_final_run_path)
+            used_run_paths.append(final_output_path)
 
         experiment_fullfile = self.save_experiment(experiment_base_name, used_run_paths, start_time)
         return experiment_fullfile, used_run_paths
 
     def run_one(self,
                 problem_template, algorithm_template,
-                hyper_param_set, run_name, use_gpu=True, priority=0):
+                hyper_param_set, run_name, final_output_path, tmp_output_path, priority=0):
         """
         inner function for run
         """
@@ -180,10 +181,10 @@ class Experiment(object):
         assert(isinstance(algorithm_template, NamedTemplate))
         assert(isinstance(hyper_param_set, dict))
 
-        final_output_path = self.get_this_final_run_path(run_name)
-
-        device = 'gpu' if use_gpu else 'cpu'
-        contents, names = self.compile_contents_and_filenames(problem_template, algorithm_template, hyper_param_set, final_output_path)
+        contents, names = \
+            self.compile_contents_and_filenames(problem_template, algorithm_template,
+                                                hyper_param_set,
+                                                final_output_path, tmp_output_path)
         algorithm_content = contents[-1]
         algorithm_name = names[-1]
         for c in contents:
@@ -196,23 +197,18 @@ class Experiment(object):
             # print '===================='
             print_named_content("Starting Experiment", "")
 
-            # if use_gpu and not self.use_sge:
-            #     # ref: https://groups.google.com/forum/#!topic/theano-users/woPgxXCEMB4
-            #     import theano.sandbox.cuda
-            #     theano.sandbox.cuda.use("gpu0")
-            # train = yaml_parse.load(final_content)
-            # train.main_loop()
+            if not self.DEBUG_MODE:
+                raise RuntimeError("Must use SGE if not in debug mode")
+
         else:
             # submit to SGE
             print_named_content('Problem:', problem_content)
             print_named_content('Algorithm:', algorithm_content)
 
-            tmp_output_path = self.get_this_tmp_run_path(run_name)
-
             # final_yaml_file = os.path.join(final_output_path, self.name_final_yaml)
 
-            d = {'device': device,
-                 'caffe_fullfile': self.caffe_fullfile,
+            d = {'caffe_binary_fullfile': self.caffe_binary_fullfile,
+                 'caffe_root': self.caffe_root,
                  'algorithm_fullfile': algorithm_name,
                  'tmp_output_path': tmp_output_path,
                  'final_output_path': final_output_path}
@@ -311,7 +307,6 @@ class Experiment(object):
         problem_name = problem_template.fill_name(hyper_param_set)
         algorithm_name = algorithm_template.fill_name(hyper_param_set)
         params = hyper_param_set['params']
-        device = hyper_param_set['device']
         d = seps.copy()
         d.update(locals())
         del d['self']
@@ -385,8 +380,12 @@ class Experiment(object):
         d = hyper_param_set.copy()
         d['problem_fullfile'] = os.path.join(final_output_path, self.name_problem_file)
         d['algorithm_fullfile'] = os.path.join(final_output_path, self.name_algorithm_file)
+
         d['final_output_path'] = final_output_path
         d['tmp_output_path'] = tmp_output_path
+
+        d['caffe_root'] = self.caffe_root
+        d['caffe_binary_fullfile'] = self.caffe_binary_fullfile
 
         contents = [problem_template.fill_content(d)]
         contents += [algorithm_template.fill_content(d)]
@@ -786,10 +785,38 @@ def _test_run_offer():
                       e.name_names_hyper_params,
                       e.name_trained_model,
                       ]
-    for run_path in used_run_paths:
+    for run_path in used_paths:
         assert os.path.exists(run_path)
         for f in expected_files:
             assert os.path.exists(os.path.join(run_path, f))
+
+# class TemplatedFile(object):
+#     def __init__(self, output_path_template, filename_template, content_template):
+#         self.output_path_template = self._validate_template(output_path_template)
+#         self.filename_template = self._validate_template(filename_template)
+#         self.content_template = self._validate_template(content_template)
+#
+#     @staticmethod
+#     def _validate_template(template):
+#         if isinstance(template, basestring):
+#             template = Template(template)
+#         assert(isinstance(template, Template))
+#         return template
+#
+#     def fullfile(self, hyper_param_dict):
+#         output_path = self.output_path_template.safe_substitute(hyper_param_dict)
+#         filename = self.filename_template.safe_substitute(hyper_param_dict)
+#
+#         return os.path.join(output_path, filename)
+#
+#     def save(self, hyper_param_dict):
+#         output_fullfile = self.fullfile(hyper_param_dict)
+#         content = self.content_template.safe_substitute(hyper_param_dict)
+#
+#         with open(output_fullfile, "w") as f:
+#             f.write(content)
+#
+#         return output_fullfile, content
 
 
 if __name__ == '__main__':
@@ -798,7 +825,9 @@ if __name__ == '__main__':
     n_data_test = 10000
 
     n_iter_train = n_data_train / batch_size
-    n_epochs = 100
+    n_epochs = 500
+
+    experiment_base_name = 'TEST-EXPERIMENT'
 
     base_params = {
         'train_batch_size': batch_size,
@@ -806,17 +835,17 @@ if __name__ == '__main__':
         'n_test_on_train_iters': n_iter_train,
         'n_test_on_test_iters': n_data_test / batch_size,
         'n_iters_before_test': n_iter_train,
-        'n_neurons_h0': 300,
-        'n_neurons_h1': 500,
+        'n_neurons_h0': 500,
+        'n_neurons_h1': 300,
         'seed': 8,
         'n_iters_before_display': 100,
         'n_max_iters': n_iter_train * n_epochs,
         'n_iters_before_snapshot': n_iter_train,
+        'params': experiment_base_name,
     }
     d = {'alpha': [0.1, 0.01],
          'momentum': [.5],
-         'params': ['these_are_params'],
-         'device': ['gpu']}
+         }
     ds = cross_dict(d)
     hyper_param_sets = append_dicts(base_params, ds)
 
@@ -828,11 +857,9 @@ if __name__ == '__main__':
     problem_template = NamedTemplate(problem_name, problem_content)
     algorithm_template = NamedTemplate(algorithm_name, algorithm_content)
 
-    experiment_base_name = 'TEST-EXPERIMENT'
-
-    e = Experiment(use_sge=True, DEBUG_MODE=False)
+    e = Experiment(use_sge=False, DEBUG_MODE=True)
     e.run(experiment_base_name, problem_template, algorithm_template, hyper_param_sets,
-          offer_compatible_runs=False, use_gpu=True)
+          offer_compatible_runs=False)
 
     # start_time = e.get_time_str()
     # run_names = e.compile_run_names(problem_template, algorithm_template, hyper_param_sets, start_time)
