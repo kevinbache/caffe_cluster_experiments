@@ -22,6 +22,7 @@ def print_named_content(name, content):
 # to my eyes, the """ """s with newlines inside makes it cleaner to keep this outside of the class
 sge_template = Template("""
 #!/bin/bash
+mkdir -p "${tmp_output_path}/"
 "${caffe_binary_fullfile}" train --solver="${algorithm_fullfile}" && mv "${tmp_output_path}/"* "${final_output_path}/"
 """
 )
@@ -32,7 +33,7 @@ seps = {'minor': '_', 'major': '--', 'super': '----'}
 class Experiment(object):
     # leave these as class variables so they can be accessed from TimeSeriesPlotter
     default_final_output_path = os.path.join(base_path, 'output')
-    default_tmp_output_path = '/scratch/sgeadmin/output/' # used if running on sun grid engine
+    default_tmp_output_path = '/scratch/sgeadmin/output/'  # used if running on sun grid engine
     default_sge_final_output_path = '/storage/code/runs/output'
 
     default_data_path_addon = 'runs'
