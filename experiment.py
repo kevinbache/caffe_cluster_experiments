@@ -5,22 +5,6 @@ from time import localtime, strftime
 from string import Template
 import subprocess
 
-# from pylearn2.config import yaml_parse
-# from experiments.model_utils import MonitorParser
-
-# calling experiment.run() creates these directories and files:
-#
-# data/<run_name>/
-#   algo_params.pkl -- {params: {}, algo_name: '', problem_name: ''}
-#   problem.yaml
-#   ducb.yaml
-#   final.yaml
-#   model.pkl
-#
-# experiments
-#   exp_name.txt
-#       <data dirs as lines>
-
 this_path = os.path.dirname(os.path.realpath(__file__))
 base_path = os.path.dirname(this_path)
 
@@ -381,10 +365,10 @@ class Experiment(object):
     #     with open(filename, 'wb') as outfile:
     #         cPickle.dump(object, outfile, protocol=cPickle.HIGHEST_PROTOCOL)
 
-    def save_problem_and_algorithm(self, problem_template, algorithm_template, hyper_param_set, final_run_path, tmp_run_path):
+    def save_problem_and_algorithm(self, problem_template, algorithm_template, hyper_param_set, final_output_path, tmp_output_path):
         contents, save_filenames = \
             self.compile_contents_and_filenames(problem_template, algorithm_template,
-                                                hyper_param_set, final_run_path)
+                                                hyper_param_set, final_output_path, tmp_output_path)
 
         for content, filename in zip(contents, save_filenames):
             if self.DEBUG_MODE:
@@ -395,13 +379,14 @@ class Experiment(object):
 
     def compile_contents_and_filenames(self,
                                        problem_template, algorithm_template,
-                                       hyper_param_set, this_run_path):
+                                       hyper_param_set, final_output_path, tmp_output_path):
         # caffe only needs the algorithm content to know the problem file's path but including
         # both here for both
         d = hyper_param_set.copy()
-        d['problem_fullfile'] = os.path.join(this_run_path, self.name_problem_file)
-        d['algorithm_fullfile'] = os.path.join(this_run_path, self.name_algorithm_file)
-        d['run_path'] = this_run_path
+        d['problem_fullfile'] = os.path.join(final_output_path, self.name_problem_file)
+        d['algorithm_fullfile'] = os.path.join(final_output_path, self.name_algorithm_file)
+        d['final_output_path'] = final_output_path
+        d['tmp_output_path'] = tmp_output_path
 
         contents = [problem_template.fill_content(d)]
         contents += [algorithm_template.fill_content(d)]
@@ -757,7 +742,7 @@ momentum: ${momentum}
 display: ${n_iters_before_display}
 max_iter: ${n_max_iters}
 snapshot: ${n_iters_before_snapshot}
-snapshot_prefix: "${run_path}/snapshot"
+snapshot_prefix: "${tmp_output_path}/snapshot"
 # solver mode: CPU or GPU
 solver_mode: GPU
 solver_type: SGD
@@ -838,7 +823,7 @@ if __name__ == '__main__':
     problem_content = problem_content_template
     algorithm_content = algorithm_content_template
     problem_name = Template('MNIST_MPL(${n_neurons_h0}, ${n_neurons_h1})')
-    algorithm_name = Template('SGD(a=${alpha}), m=${momentum}')
+    algorithm_name = Template('SGD(a=${alpha}, m=${momentum})')
 
     problem_template = NamedTemplate(problem_name, problem_content)
     algorithm_template = NamedTemplate(algorithm_name, algorithm_content)
@@ -848,6 +833,7 @@ if __name__ == '__main__':
     e = Experiment(use_sge=True, DEBUG_MODE=False)
     e.run(experiment_base_name, problem_template, algorithm_template, hyper_param_sets,
           offer_compatible_runs=False, use_gpu=True)
+
     # start_time = e.get_time_str()
     # run_names = e.compile_run_names(problem_template, algorithm_template, hyper_param_sets, start_time)
     # print 'RUN NAMES:'
