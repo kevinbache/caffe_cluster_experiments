@@ -57,7 +57,7 @@ n_data_train = 60000
 n_data_test = 10000
 
 assert not n_data_train % batch_size
-n_iters_per_epoch = n_data_train / batch_size
+n_iters_per_epoch = int(n_data_train / batch_size)
 n_epochs = 500
 
 experiment_base_name = 'TEST-EXPERIMENT'
@@ -84,8 +84,8 @@ hyper_params = {
     'n_max_iters': n_iters_per_epoch * n_epochs,
     'n_iters_before_snapshot': n_iters_per_epoch,
 
-    'n_neurons_h0_sparse_init': floor(n_neurons_h0 / 10),
-    'n_neurons_h1_sparse_init': floor(n_neurons_h1 / 10),
+    'n_neurons_h0_sparse_init': int(n_neurons_h0 / 10),
+    'n_neurons_h1_sparse_init': int(n_neurons_h1 / 10),
     'n_neurons_y_sparse_init': 0,
 
     # 'h0_bias': 0.,
