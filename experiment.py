@@ -23,7 +23,12 @@ def print_named_content(name, content):
 sge_template = Template("""
 #!/bin/bash
 mkdir -p "${tmp_output_path}/"
-"${caffe_binary_fullfile}" train --solver="${algorithm_fullfile}" && mv "${tmp_output_path}/"* "${final_output_path}/"
+"${caffe_binary_fullfile}" train --solver="${algorithm_fullfile}"
+
+# move the latest solverstate and caffemodel to the final output path
+mv "$(ls -t \"${tmp_output_path}\"/*.solverstate | head -1)" "${final_output_path}"
+mv "$(ls -t \"${tmp_output_path}\"/*.caffemodel | head -1)" "${final_output_path}"
+
 """
 )
 
