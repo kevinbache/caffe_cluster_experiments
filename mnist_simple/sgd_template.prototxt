@@ -8,11 +8,11 @@ test_iter: ${n_test_on_test_iters}
 test_interval: ${n_iters_before_test}
 test_compute_loss: true
 
-base_lr: ${alpha}
-lr_policy: "fixed"
+base_lr: ${learning_rate}
+lr_policy: "step"
 momentum: ${momentum}
-#gamma: 0.1
-#stepsize: 10000
+gamma: ${lr_decay}
+stepsize: ${n_iters_before_test}
 
 display: ${n_iters_before_display}
 max_iter: ${n_max_iters}

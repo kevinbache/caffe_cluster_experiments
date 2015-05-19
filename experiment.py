@@ -9,12 +9,13 @@ this_path = os.path.dirname(os.path.realpath(__file__))
 base_path = os.path.dirname(this_path)
 
 def print_named_content(name, content):
-    print '========================================================================================'
-    print '========================================================================================'
+    header_len = 100
+    print
+    print '=' * header_len
     print name
-    print '----------------------------------------------------------------------------------------'
+    print '-' * header_len
     print content
-    print '========================================================================================'
+    print '=' * header_len
     print
 
 
@@ -37,8 +38,8 @@ class Experiment(object):
     default_data_path_addon = 'runs'
     default_experiment_path_addon = 'experiments'
     # these will be checked in order to see if the file exists at each location before use
-    default_caffe_roots = ['/storage/code/caffe/',
-                           '/Users/kevin/projects/caffe/']
+    default_caffe_roots = ['/storage/code/caffe',
+                           '/Users/kevin/projects/caffe']
     default_caffe_bin_addon = 'build/tools/caffe'
 
     # a 'run' represents a single call to train.main_loop()
@@ -185,16 +186,12 @@ class Experiment(object):
             self.compile_contents_and_filenames(problem_template, algorithm_template,
                                                 hyper_param_set,
                                                 final_output_path, tmp_output_path)
-        algorithm_content = contents[-1]
-        algorithm_name = names[-1]
+        problem_content, algorithm_content = contents
+        problem_name, algorithm_name = names
         for c in contents:
             if self._has_empty_fields(c):
                 raise ValueError('Not all fields filled in content file:\n' + c)
         if not self.use_sge:
-            # run on local machine
-            # print '===================='
-            # print 'Starting Experiment:'
-            # print '===================='
             print_named_content("Starting Experiment", "")
 
             if not self.DEBUG_MODE:
@@ -204,8 +201,6 @@ class Experiment(object):
             # submit to SGE
             print_named_content('Problem:', problem_content)
             print_named_content('Algorithm:', algorithm_content)
-
-            # final_yaml_file = os.path.join(final_output_path, self.name_final_yaml)
 
             d = {'caffe_binary_fullfile': self.caffe_binary_fullfile,
                  'caffe_root': self.caffe_root,
@@ -509,7 +504,6 @@ class NamedTemplate(object):
     @property
     def name_template(self):
         return self._name_template.template
-
 
     # @staticmethod
     # def has_unfilled_fields(string):
@@ -837,7 +831,6 @@ if __name__ == '__main__':
         'n_iters_before_test': n_iter_train,
         'n_neurons_h0': 500,
         'n_neurons_h1': 300,
-        'seed': 8,
         'n_iters_before_display': 100,
         'n_max_iters': n_iter_train * n_epochs,
         'n_iters_before_snapshot': n_iter_train,
@@ -845,6 +838,7 @@ if __name__ == '__main__':
     }
     d = {'alpha': [0.1, 0.01],
          'momentum': [.5],
+         'seed': [9],
          }
     ds = cross_dict(d)
     hyper_param_sets = append_dicts(base_params, ds)
@@ -860,12 +854,6 @@ if __name__ == '__main__':
     e = Experiment(use_sge=False, DEBUG_MODE=True)
     e.run(experiment_base_name, problem_template, algorithm_template, hyper_param_sets,
           offer_compatible_runs=False)
-
-    # start_time = e.get_time_str()
-    # run_names = e.compile_run_names(problem_template, algorithm_template, hyper_param_sets, start_time)
-    # print 'RUN NAMES:'
-    # for r in run_names:
-    #     print r
 
     # _test_run_offer()
 
