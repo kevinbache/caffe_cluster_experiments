@@ -134,13 +134,54 @@ class Experiment(object):
         if len(run_names) != len(set(run_names)):
             raise ValueError('Run names should all be unique, but run_names = \n' + '\n'.join(run_names))
 
-    def run(self, experiment_base_name, problem_template, algorithm_template, hyper_param_sets,
+    @staticmethod
+    def add_batch_size_params(hyper_param_dicts):
+        required_params = ['n_data_train',
+                           'n_data_test',
+                           'batch_size',
+                           'n_epochs_before_each_snapshot',
+                           'n_epochs']
+        for hyper_param_dict in hyper_param_dicts:
+            if set(required_params) <= set(hyper_param_dict.keys()):
+                batch_size = hyper_param_dict['batch_size']
+                n_data_train = hyper_param_dict['n_data_train']
+                n_data_test = hyper_param_dict['n_data_test']
+                assert not n_data_train % batch_size
+                assert not n_data_test % batch_size
+
+                n_epochs = hyper_param_dict['n_epochs']
+                n_epochs_before_each_snapshot = hyper_param_dict['n_epochs_before_each_snapshot']
+
+                n_iters_per_epoch = int(n_data_train / batch_size)
+                n_iters_per_test = int(n_data_test / batch_size)
+
+                d = {
+                    'train_batch_size': batch_size,
+                    'test_batch_size': batch_size,
+
+                    'n_test_on_train_iters': n_iters_per_epoch,
+                    'n_test_on_test_iters': n_iters_per_test,
+
+                    'n_iters_before_display': 100,
+                    'n_iters_before_test': n_iters_per_epoch,
+                    'n_max_iters': n_iters_per_epoch * n_epochs,
+                    'n_iters_before_snapshot': n_iters_per_epoch * n_epochs_before_each_snapshot,
+                }
+                hyper_param_dict.update(d)
+            else:
+                missing_keys = [k for k in required_params if k not in hyper_param_dict]
+                raise ValueError("A hyperparameter dict is missing the keys: "
+                                 + ', '.join(missing_keys))
+
+    def run(self, experiment_base_name, problem_template, algorithm_template, hyper_param_dicts,
             offer_compatible_runs=True, priority=0):
-        if isinstance(hyper_param_sets, dict):
-            hyper_param_sets = [hyper_param_sets,]
+        if isinstance(hyper_param_dicts, dict):
+            hyper_param_dicts = [hyper_param_dicts,]
+
+        self.add_batch_size_params(hyper_param_dicts)
 
         start_time = self.get_time_str()
-        run_names = self.compile_run_names(problem_template, algorithm_template, hyper_param_sets, start_time)
+        run_names = self.compile_run_names(problem_template, algorithm_template, hyper_param_dicts, start_time)
         self.validate_run_names(run_names)
 
         if offer_compatible_runs:
@@ -151,10 +192,10 @@ class Experiment(object):
             use_runs = [0] * len(run_names)
 
         used_run_paths = []
-        for hyper_param_set, \
+        for hyper_param_dict, \
             run_name, \
             use_run, \
-            compatible_runs in zip(hyper_param_sets, run_names, use_runs, all_compatible_runs):
+            compatible_runs in zip(hyper_param_dicts, run_names, use_runs, all_compatible_runs):
 
             if use_run != 0:
                 # load an existing run instead of performing a new one
@@ -167,11 +208,11 @@ class Experiment(object):
                     tmp_output_path = final_output_path
                 if not self.DEBUG_MODE:
                     self.makedir(final_output_path)
-                self.save_names_and_hyper_params(problem_template, algorithm_template, hyper_param_set, final_output_path)
-                self.save_problem_and_algorithm(problem_template, algorithm_template, hyper_param_set, final_output_path, tmp_output_path)
+                self.save_names_and_hyper_params(problem_template, algorithm_template, hyper_param_dict, final_output_path)
+                self.save_problem_and_algorithm(problem_template, algorithm_template, hyper_param_dict, final_output_path, tmp_output_path)
 
                 # perform a new run
-                self.run_one(problem_template, algorithm_template, hyper_param_set, run_name, final_output_path, tmp_output_path, priority)
+                self.run_one(problem_template, algorithm_template, hyper_param_dict, run_name, final_output_path, tmp_output_path, priority)
                 # save problem name, algorithm name, hyperparameters and yaml files
             used_run_paths.append(final_output_path)
 
@@ -180,17 +221,17 @@ class Experiment(object):
 
     def run_one(self,
                 problem_template, algorithm_template,
-                hyper_param_set, run_name, final_output_path, tmp_output_path, priority=0):
+                hyper_param_dict, run_name, final_output_path, tmp_output_path, priority=0):
         """
         inner function for run
         """
         assert(isinstance(problem_template, NamedTemplate))
         assert(isinstance(algorithm_template, NamedTemplate))
-        assert(isinstance(hyper_param_set, dict))
+        assert(isinstance(hyper_param_dict, dict))
 
         contents, names = \
             self.compile_contents_and_filenames(problem_template, algorithm_template,
-                                                hyper_param_set,
+                                                hyper_param_dict,
                                                 final_output_path, tmp_output_path)
         problem_content, algorithm_content = contents
         problem_name, algorithm_name = names
@@ -301,18 +342,18 @@ class Experiment(object):
         d['start_time'] = start_time
         return self.experiment_filename_template.safe_substitute(d)
 
-    def compile_run_names(self, problem_template, algorithm_template, hyper_param_sets, start_time):
-        return [self.compile_run_name(problem_template, algorithm_template, p, start_time) for p in hyper_param_sets]
+    def compile_run_names(self, problem_template, algorithm_template, hyper_param_dicts, start_time):
+        return [self.compile_run_name(problem_template, algorithm_template, p, start_time) for p in hyper_param_dicts]
 
-    def compile_run_name(self, problem_template, algorithm_template, hyper_param_set, start_time):
-        problem_name = problem_template.fill_name(hyper_param_set)
-        algorithm_name = algorithm_template.fill_name(hyper_param_set)
-        params = hyper_param_set['params']
+    def compile_run_name(self, problem_template, algorithm_template, hyper_param_dict, start_time):
+        problem_name = problem_template.fill_name(hyper_param_dict)
+        algorithm_name = algorithm_template.fill_name(hyper_param_dict)
+        params = hyper_param_dict['params']
         d = seps.copy()
         d.update(locals())
         del d['self']
-        if 'seed' in hyper_param_set:
-            d['seed'] = hyper_param_set['seed']
+        if 'seed' in hyper_param_dict:
+            d['seed'] = hyper_param_dict['seed']
         else:
             d['seed'] = None
 
@@ -320,10 +361,10 @@ class Experiment(object):
 
     def save_names_and_hyper_params(self,
                                     problem_template, algorithm_template,
-                                    hyper_param_set, this_run_path):
-        problem_name = problem_template.fill_name(hyper_param_set)
-        algorithm_name = algorithm_template.fill_name(hyper_param_set)
-        d = hyper_param_set.copy()
+                                    hyper_param_dict, this_run_path):
+        problem_name = problem_template.fill_name(hyper_param_dict)
+        algorithm_name = algorithm_template.fill_name(hyper_param_dict)
+        d = hyper_param_dict.copy()
         d['problem_name'] = problem_name
         d['algorithm_name'] = algorithm_name
 
@@ -361,10 +402,10 @@ class Experiment(object):
     #     with open(filename, 'wb') as outfile:
     #         cPickle.dump(object, outfile, protocol=cPickle.HIGHEST_PROTOCOL)
 
-    def save_problem_and_algorithm(self, problem_template, algorithm_template, hyper_param_set, final_output_path, tmp_output_path):
+    def save_problem_and_algorithm(self, problem_template, algorithm_template, hyper_param_dict, final_output_path, tmp_output_path):
         contents, save_filenames = \
             self.compile_contents_and_filenames(problem_template, algorithm_template,
-                                                hyper_param_set, final_output_path, tmp_output_path)
+                                                hyper_param_dict, final_output_path, tmp_output_path)
 
         for content, filename in zip(contents, save_filenames):
             if self.DEBUG_MODE:
@@ -375,10 +416,10 @@ class Experiment(object):
 
     def compile_contents_and_filenames(self,
                                        problem_template, algorithm_template,
-                                       hyper_param_set, final_output_path, tmp_output_path):
+                                       hyper_param_dict, final_output_path, tmp_output_path):
         # caffe only needs the algorithm content to know the problem file's path but including
         # both here for both
-        d = hyper_param_set.copy()
+        d = hyper_param_dict.copy()
         d['problem_fullfile'] = os.path.join(final_output_path, self.name_problem_file)
         d['algorithm_fullfile'] = os.path.join(final_output_path, self.name_algorithm_file)
 
@@ -768,7 +809,7 @@ def _test_run_offer():
     }
     d = { 'learning_rate': [0.1, 0.01], 'seed': [4, 5] }
     ds = cross_dict(d)
-    hyper_param_sets = append_dicts(base_params, ds)
+    hyper_param_dicts = append_dicts(base_params, ds)
 
     experiment_name = 'TEST_EXPERIMENT'
     e = Experiment()
@@ -776,7 +817,7 @@ def _test_run_offer():
     algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_content_template_str)
 
     experiment_fullfile, used_paths = \
-        e.run(experiment_name, problem_template, algorithm_template, hyper_param_sets, offer_compatible_runs=True)
+        e.run(experiment_name, problem_template, algorithm_template, hyper_param_dicts, offer_compatible_runs=True)
 
     # ensure that correct files were created
     assert os.path.exists(experiment_fullfile)
@@ -847,7 +888,7 @@ if __name__ == '__main__':
          'seed': [9],
          }
     ds = cross_dict(d)
-    hyper_param_sets = append_dicts(base_params, ds)
+    hyper_param_dicts = append_dicts(base_params, ds)
 
     problem_content = problem_content_template
     algorithm_content = algorithm_content_template
@@ -858,7 +899,7 @@ if __name__ == '__main__':
     algorithm_template = NamedTemplate(algorithm_name, algorithm_content)
 
     e = Experiment(use_sge=False, DEBUG_MODE=True)
-    e.run(experiment_base_name, problem_template, algorithm_template, hyper_param_sets,
+    e.run(experiment_base_name, problem_template, algorithm_template, hyper_param_dicts,
           offer_compatible_runs=False)
 
     # _test_run_offer()
