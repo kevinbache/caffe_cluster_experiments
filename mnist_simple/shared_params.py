@@ -29,10 +29,7 @@ problem_file = os.path.join(this_path, 'problem_template.prototxt')
 with open(problem_file, 'r') as f:
     problem_yaml_template_str = f.read()
 
-problem_name_template_str = "MNIST-FF(" \
-                            "n_h0=${n_neurons_h0}-" \
-                            "n_h1=${n_neurons_h1}" \
-                            ")-" \
+problem_name_template_str = "MNIST-FF(${n_neurons_h0}-${n_neurons_h1})-" \
                             "tag(${tag})"
 problem_template = NamedTemplate(problem_name_template_str, problem_yaml_template_str)
 
@@ -70,17 +67,6 @@ hyper_params = {
     'n_data_test': 10000,
     'n_epochs_before_each_snapshot': 10,
     'n_epochs': 20,
-
-    # 'train_batch_size': batch_size,
-    # 'test_batch_size': batch_size,
-    #
-    # 'n_test_on_train_iters': n_iters_per_epoch,
-    # 'n_test_on_test_iters': n_iters_per_test,
-    #
-    # 'n_iters_before_display': 100,
-    # 'n_iters_before_test': n_iters_per_epoch,
-    # 'n_max_iters': n_iters_per_epoch * n_epochs,
-    # 'n_iters_before_snapshot': n_iters_per_epoch * n_epochs_before_each_snapshot,
 
     'n_neurons_h0_sparse_init': int(n_neurons_h0 / 10),
     'n_neurons_h1_sparse_init': int(n_neurons_h1 / 10),

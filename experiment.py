@@ -39,7 +39,7 @@ class Experiment(object):
     # leave these as class variables so they can be accessed from TimeSeriesPlotter
     default_final_output_path = os.path.join(base_path, 'output')
     default_tmp_output_path = '/scratch/sgeadmin/output/'  # used if running on sun grid engine
-    default_sge_final_output_path = '/storage/code/runs/output'
+    default_sge_final_output_path = '/storage/code/output'
 
     default_data_path_addon = 'runs'
     default_experiment_path_addon = 'experiments'

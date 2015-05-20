@@ -48,9 +48,9 @@ cross_params = {
     # 'learning_rate': [1, .3, .1, .03, .01, .003],
     # 'lr_decay_factor': [.99, .995, 1.],
     # 'seed': np.arange(3)
-    'momentum': [.9],
-    'batch_size': [100],
-    'learning_rate': [1],
+    'momentum': [.7],
+    'batch_size': 125 * 2 ** np.arange(5),
+    'learning_rate': [.1],
     'lr_decay': [.99],
     'seed': np.arange(1)
 }
