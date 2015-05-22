@@ -8,7 +8,7 @@ test_iter: ${n_test_on_test_iters}
 test_interval: ${n_iters_before_test}
 test_compute_loss: true
 
-log_high_alpha: 8
+log_high_alpha: 6
 log_low_alpha: -6
 n_alphas: 100
 
