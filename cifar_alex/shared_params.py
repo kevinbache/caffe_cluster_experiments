@@ -28,7 +28,7 @@ problem_file = os.path.join(this_path, 'problem_template.prototxt')
 with open(problem_file, 'r') as f:
     problem_yaml_template_str = f.read()
 
-problem_name_template_str = "MNIST-FF(${n_neurons_h0}-${n_neurons_h1})-" \
+problem_name_template_str = "CifarAlexCaffe-" \
                             "tag(${tag})"
 problem_template = NamedTemplate(problem_name_template_str, problem_yaml_template_str)
 
@@ -45,9 +45,6 @@ elif hostname == 'master':
 else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
-n_neurons_h0 = 500
-n_neurons_h1 = 300
-
 experiment_base_name = 'TEST-EXPERIMENT'
 
 hyper_params = {
@@ -56,30 +53,14 @@ hyper_params = {
     'params': location,
     'tag': experiment_base_name,
 
-    # # 'unit_type': 'Sigmoid',
-    # 'unit_type': 'RectifiedLinear',
-
-    'n_neurons_h0': n_neurons_h0,
-    'n_neurons_h1': n_neurons_h1,
-
     'n_data_train': 60000,
     'n_data_test': 10000,
     'n_epochs_before_each_snapshot': 10,
-    'n_epochs': 20,
+    'n_epochs': 50,
 
-    'n_neurons_h0_sparse_init': int(n_neurons_h0 / 10),
-    'n_neurons_h1_sparse_init': int(n_neurons_h1 / 10),
-    'n_neurons_y_sparse_init': 0,
-
-    # 'h0_bias': 0.,
-    # 'h1_bias': 0.,
-    #
-    # 'col_norm': max_col_norm,
-    # 'h0_col_norm': max_col_norm,
-    # 'h1_col_norm': max_col_norm,
-    # 'y_col_norm': max_col_norm,
-    #
-    # 'use_dropout': USE_DROPOUT,
+    # 'n_neurons_h0_sparse_init': int(n_neurons_h0 / 10),
+    # 'n_neurons_h1_sparse_init': int(n_neurons_h1 / 10),
+    # 'n_neurons_y_sparse_init': 0,
 }
 
 
