@@ -24,7 +24,7 @@ from mnist_simple.shared_params import *
 #############
 # load yaml #
 #############
-with open(os.path.join(this_path, 'sgd_template.prototxt'), 'r') as f:
+with open(os.path.join(this_path, 'solver_sgd_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
 ####################
@@ -52,7 +52,7 @@ cross_params = {
     'batch_size': 125 * 2 ** np.arange(5),
     'learning_rate': [.1],
     'lr_decay': [.99],
-    'seed': np.arange(1)
+    'seed': np.arange(3)
 }
 priority = 0
 hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
@@ -60,6 +60,6 @@ hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
 ##################
 # run experiment #
 ##################
-e = Experiment(use_sge=True, DEBUG_MODE=True)
+e = Experiment(use_sge=True, DEBUG_MODE=False)
 e.run(experiment_base_name, problem_template, algorithm_template, hyper_params,
       offer_compatible_runs=False, priority=priority)

@@ -24,7 +24,7 @@ from mnist_simple.shared_params import *
 #############
 # load yaml #
 #############
-with open(os.path.join(this_path, 'lc_template.prototxt'), 'r') as f:
+with open(os.path.join(this_path, 'solver_lc_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
 ####################
@@ -43,16 +43,11 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    # 'init_momentum': [0., .5, .7, .9],
-    # 'batch_size': [64, 128, 256, 512, 1024],
-    # 'learning_rate': [1, .3, .1, .03, .01, .003],
-    # 'lr_decay_factor': [.99, .995, 1.],
-    # 'seed': np.arange(3)
     'batch_size': 125 * 2 ** np.arange(5),
     'log_alpha_min': [-6],
     'log_alpha_max': [8],
     'n_alphas': [99],
-    'seed': np.arange(1)
+    'seed': np.arange(3)
 }
 priority = 0
 hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
@@ -60,6 +55,6 @@ hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
 ##################
 # run experiment #
 ##################
-e = Experiment(use_sge=True, DEBUG_MODE=True)
+e = Experiment(use_sge=True, DEBUG_MODE=False)
 e.run(experiment_base_name, problem_template, algorithm_template, hyper_params,
       offer_compatible_runs=False, priority=priority)
