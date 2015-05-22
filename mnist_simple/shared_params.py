@@ -65,7 +65,7 @@ hyper_params = {
     'n_data_train': 60000,
     'n_data_test': 10000,
     'n_epochs_before_each_snapshot': 10,
-    'n_epochs': 20,
+    'n_epochs': 200,
 
     'n_neurons_h0_sparse_init': int(n_neurons_h0 / 10),
     'n_neurons_h1_sparse_init': int(n_neurons_h1 / 10),

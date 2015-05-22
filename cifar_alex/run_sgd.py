@@ -44,14 +44,9 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    # 'init_momentum': [0., .5, .7, .9],
-    # 'batch_size': [64, 128, 256, 512, 1024],
-    # 'learning_rate': [1, .3, .1, .03, .01, .003],
-    # 'lr_decay_factor': [.99, .995, 1.],
-    # 'seed': np.arange(3)
-    'momentum': [.7],
-    'batch_size': 125 * 2 ** np.arange(5),
-    'learning_rate': [.1],
+    'batch_size': [32, 64, 125, 250, 500, 1000],
+    'momentum': [0.0, 0.5],
+    'learning_rate': [.01, .003, .001, .0003, .0001],
     'lr_decay': [.99],
     'seed': np.arange(3)
 }
