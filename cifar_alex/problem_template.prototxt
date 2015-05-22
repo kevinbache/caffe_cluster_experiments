@@ -23,13 +23,13 @@ layer {
   top: "label"
   include {
     phase: TEST
-    stage: "test-on-test"
+    stage: "test-on-train"
   }
   transform_param {
     mean_file: "${caffe_root}/examples/cifar10/mean.binaryproto"
   }
   data_param {
-    source: "${caffe_root}/examples/cifar10/cifar10_test_lmdb"
+    source: "${caffe_root}/examples/cifar10/cifar10_train_lmdb"
     batch_size: ${batch_size}
     backend: LMDB
   }
@@ -41,13 +41,13 @@ layer {
   top: "label"
   include {
     phase: TEST
-    stage: "test-on-train"
+    stage: "test-on-test"
   }
   transform_param {
     mean_file: "${caffe_root}/examples/cifar10/mean.binaryproto"
   }
   data_param {
-    source: "${caffe_root}/examples/cifar10/cifar10_train_lmdb"
+    source: "${caffe_root}/examples/cifar10/cifar10_test_lmdb"
     batch_size: ${batch_size}
     backend: LMDB
   }
