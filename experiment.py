@@ -162,7 +162,7 @@ class Experiment(object):
                     'n_test_on_train_iters': n_iters_per_epoch,
                     'n_test_on_test_iters': n_iters_per_test,
 
-                    'n_iters_before_display': 100,
+                    'n_iters_before_display': int(n_iters_per_epoch / 10),
                     'n_iters_before_test': n_iters_per_epoch,
                     'n_max_iters': n_iters_per_epoch * n_epochs,
                     'n_iters_before_snapshot': n_iters_per_epoch * n_epochs_before_each_snapshot,
