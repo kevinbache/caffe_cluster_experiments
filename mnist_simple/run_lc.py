@@ -43,7 +43,7 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    'batch_size': [32, 64, 125, 250, 500, 1000],
+    'batch_size': [25, 50, 125, 250, 500, 1000],
     'log_alpha_min': [-6],
     'log_alpha_max': [8],
     'n_alphas': [99],
