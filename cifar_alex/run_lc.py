@@ -56,6 +56,6 @@ hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
 ##################
 # run experiment #
 ##################
-e = Experiment(use_sge=False, DEBUG_MODE=True)
+e = Experiment(use_sge=True, DEBUG_MODE=False)
 e.run(experiment_base_name, problem_template, algorithm_template, hyper_params,
       offer_compatible_runs=False, priority=priority)
