@@ -53,7 +53,7 @@ hyper_params = {
     'params': location,
     'tag': experiment_base_name,
 
-    'n_data_train': 60000,
+    'n_data_train': 50000,
     'n_data_test': 10000,
     'n_epochs_before_each_snapshot': 10,
     'n_epochs': 50,
