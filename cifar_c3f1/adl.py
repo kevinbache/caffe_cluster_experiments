@@ -30,8 +30,8 @@ algorithm_name_template_str = "ADL(" \
                               "min=${log_low_alpha}_" \
                               "max=${log_high_alpha}_" \
                               "n=${n_alphas}_" \
-                              "mom=${momentum}" \
-                              "delta=${delta}" \
+                              "mom=${momentum}_" \
+                              "delta=${delta}_" \
                               "nepochs=${n_epochs}" \
                               ")"
 algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_template_str)

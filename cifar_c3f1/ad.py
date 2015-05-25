@@ -27,8 +27,8 @@ with open(os.path.join(this_path, 'solver_ad_template.prototxt'), 'r') as f:
 
 algorithm_name_template_str = "AD(" \
                               "batch=${batch_size}_" \
-                              "mom=${momentum}" \
-                              "delta=${delta}" \
+                              "mom=${momentum}_" \
+                              "delta=${delta}_" \
                               "nepochs=${n_epochs}" \
                               ")"
 algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_template_str)

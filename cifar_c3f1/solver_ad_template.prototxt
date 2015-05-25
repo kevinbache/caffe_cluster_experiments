@@ -15,7 +15,7 @@ delta: ${delta}
 display: ${n_iters_before_display}
 max_iter: ${n_max_iters}
 snapshot: ${n_iters_before_snapshot}
-snapshot_prefix: "${tmp_output_path}/snapshot_adagradline"
+snapshot_prefix: "${tmp_output_path}/snapshot_adadelta"
 solver_mode: GPU
 solver_type: ADAGRADLINE
 
