@@ -27,8 +27,8 @@ with open(os.path.join(this_path, 'solver_agl_template.prototxt'), 'r') as f:
 
 algorithm_name_template_str = "AGL(" \
                               "batch=${batch_size}_" \
-                              "min=${log_alpha_min}_" \
-                              "max=${log_alpha_max}_" \
+                              "min=${log_low_alpha}_" \
+                              "max=${log_high_alpha}_" \
                               "n=${n_alphas}_" \
                               "nepochs=${n_epochs}" \
                               ")"
