@@ -40,8 +40,8 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 cross_params = {
     # 'batch_size': [25, 50, 125, 250, 500, 1000],
     'batch_size': [125],
-    'log_alpha_min': [-6],
-    'log_alpha_max': [0],
+    'log_low_alpha': [-6],
+    'log_high_alpha': [0],
     'n_alphas': [99],
     # 'seed': np.arange(3)
     'seed': np.arange(1)
