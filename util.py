@@ -20,3 +20,5 @@ def load_channels(channels_filename):
         df = pd.load(channels_filename)
     algorithm_name = os.path.basename(os.path.dirname(channels_filename))
     return df, algorithm_name
+
+

@@ -6,7 +6,6 @@ from string import Template
 import subprocess
 
 this_path = os.path.dirname(os.path.realpath(__file__))
-base_path = os.path.dirname(this_path)
 
 def print_named_content(name, content):
     header_len = 100
@@ -37,7 +36,7 @@ seps = {'minor': '_', 'major': '--', 'super': '----'}
 
 class Experiment(object):
     # leave these as class variables so they can be accessed from TimeSeriesPlotter
-    default_final_output_path = os.path.join(base_path, 'output')
+    default_final_output_path = os.path.join(this_path, 'output')
     default_tmp_output_path = '/scratch/sgeadmin/output/'  # used if running on sun grid engine
     default_sge_final_output_path = '/storage/output/'
 

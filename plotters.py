@@ -1,12 +1,15 @@
 from math import floor
 import os
+import sys
 import itertools
 
 import numpy as np
 import pylab
 
-from experiment import Experiment
-# from experiments.model_utils import MonitorParser
+this_path = os.path.dirname(os.path.realpath(__file__))
+sys.path += [this_path]
+
+from experiment import Experiment, seps
 
 def data_dir_2_alg_name(*args):
     if len(args) == 2:
@@ -15,9 +18,72 @@ def data_dir_2_alg_name(*args):
     else:
         data_dir_name = args[0]
     # this is a hack to get the right separator
-    alg_name, _ = data_dir_name.split(Experiment.seps['super'])
-    _, alg_name = alg_name.split(Experiment.seps['major'])
+    alg_name, _ = data_dir_name.split(seps['super'])
+    _, alg_name = alg_name.split(seps['major'])
     return alg_name
+
+def read_experiment_file(fullfilename):
+    """
+    loads the channel files from the runs referred to in a given experiment file.
+    """
+    filename = os.path.basename(fullfilename)
+
+    with open(fullfilename) as f:
+        data_paths = f.read().splitlines()
+
+    experiment_name, _ = filename.split(seps['super'])
+
+    return data_paths, experiment_name
+
+def load_parsed_df(channels_filename):
+    """
+    load a channels_filename data frame saved by save_channels
+
+    :param channels_filename: the name of the channels_filename file to load
+    :rtype: pandas.DataFrame
+    :return: DataFrame representing all the channels_filename in a model, time slice is the index and channel names are
+             the columns and the name of the algorithm that generated this run, i.e. the name of the directory in which
+             the channels file is contained
+    """
+    import pandas as pd
+    if hasattr(pd, 'read_pickle'):
+        # true for recent pandas
+        df = pd.read_pickle(channels_filename)
+    else:
+        # true for old pandas
+        df = pd.load(channels_filename)
+    algorithm_name = os.path.basename(os.path.dirname(channels_filename))
+    return df, algorithm_name
+
+def replace_storage_with_this_path(fullfile):
+    if fullfile.startswith('/storage'):
+        output_path = fullfile.split('/', 2)[2]
+        return os.path.join(this_path, output_path)
+    else:
+        return fullfile
+
+def load_parsed_dfs_from_experiment(exp_filename, df_filename='parsed_log_df.pkl'):
+    """
+    load the parsed log dfs located in all directories in the given experiment file; return them in a Pandas Panel
+
+    :param exp_filename: the name of the experiment file to load.  must be on the python path or be fully qualified
+    :rtype: Pandas.Panel
+    :return: a Pandas Panel in which each item as a single algorithm for the experiment file, major axis is time
+             slice, minor axis is channel name
+    """
+    import pandas as pd
+
+    data_paths, exp_name = read_experiment_file(exp_filename)
+    data = {}
+    n_paths = len(data_paths)
+    for i, f in enumerate(data_paths):
+        f = replace_storage_with_this_path(f)
+        print 'now loading file % 4d of % 4d: %s' % (i+1, n_paths, f)
+        df, alg_name = load_parsed_df(os.path.join(f, df_filename))
+        data[alg_name] = df
+
+    return pd.Panel(data), exp_name
+
 
 class Plotter(object):
     x_names_2_labels = {
@@ -58,14 +124,13 @@ class Plotter(object):
     default_plots_path_addon = 'plots'
 
     def __init__(self, output_path=None, linewidth=1.5):
-        self.e = Experiment(output_path)
-        # self.p = MonitorParser()
+        e = Experiment(output_path)
         self.linewidth = linewidth
         if output_path is None:
-            self.output_path = os.path.join(self.e.output_path, self.default_plots_path_addon)
+            self.output_path = os.path.join(e.final_output_path, self.default_plots_path_addon)
         else:
             self.output_path = output_path
-        self.e.makedir(self.output_path)
+        e.makedir(self.output_path)
 
 
 class ScatterPlotter(Plotter):
@@ -170,7 +235,7 @@ class ScatterPlotter(Plotter):
                              x_lims = (None, None),
                              y_lims = (None, None),
                              **kwargs):
-        panel, exp_name = self.e.load_channels_from_experiment(experiment_filename)
+        panel, exp_name = load_parsed_dfs_from_experiment(experiment_filename)
         if plot_base_name is None:
             plot_base_name = exp_name
         if plot_addon_name is not None:
@@ -479,6 +544,16 @@ class TimeSeriesPlotter(Plotter):
             # <color>, <linestyle>, <linewidth>, <alpha>, <zorder>, <line label>
             cm = pylab.get_cmap('afmhot_r')
             return cm(cmap_index), style, line_width, alpha, 10, 'DUCB, batch =% 5d' % batch_size
+        elif 'lc' in an:
+            # step 2: remap values to the range i want for this map
+            MIN_CMAP = .33
+            MAX_CMAP = .9
+            cmap_index = cmap_index * (MAX_CMAP - MIN_CMAP) + MIN_CMAP
+
+            # <color>, <linestyle>, <linewidth>, <alpha>, <zorder>, <line label>
+            cm = pylab.get_cmap('afmhot_r')
+            return cm(cmap_index), style, line_width, alpha, 10, 'LineCurrent+1, batch =% 5d' % batch_size
+
         elif 'adadelta' in an:
             MIN_CMAP = .5
             MAX_CMAP = .9
@@ -506,7 +581,7 @@ class TimeSeriesPlotter(Plotter):
     legend_width_mx = 0.70
 
     def plot_from_experiment(self, experiment_filename, plot_base_name=None, vars_to_plot=None, **kwargs):
-        panel, exp_name = self.e.load_channels_from_experiment(experiment_filename)
+        panel, exp_name = load_parsed_dfs_from_experiment(experiment_filename)
         if plot_base_name is None:
             plot_base_name = exp_name
 
@@ -647,7 +722,9 @@ class TimeSeriesPlotter(Plotter):
 
             if save_formats is not None:
                 for fmt in save_formats:
-                    fig.savefig(os.path.join(self.output_path, full_plot_name+'.'+fmt), bbox_inches='tight', dpi=300)
+                    save_file = os.path.join(self.output_path, full_plot_name+'.'+fmt)
+                    print 'Saving:', save_file
+                    fig.savefig(save_file, bbox_inches='tight', dpi=300)
         print 'TimeSeriesPlotter: Plots are up'
         pylab.show()
 
@@ -698,20 +775,38 @@ if __name__ == '__main__':
     ############
     # FIGURE 3 #
     ############
-    exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec16_mnist_3layer_500-300_sigmoid_best_of_seed1----all.txt'
-    ylims = [[0.01, 0.030], None, [1e-3, 1e1], None]
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/mnist_both----2015.05.22.txt')
+    # ylims = [[.01, .03], None, [1e-2, 1e6], None]
+    # xmax = 1800
+    # vars_to_plot = (
+    #     # ('epochs_seen', ['test_y_misclass', 'train_y_nll', 'learning_rate', 'grad_norm']),
+    #     ('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate',  'grad_norm']),
+    # )
+    #
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
+    exp_file = os.path.join(this_path,
+                            'output/experiments/cifar_scale_test----2015.05.24.txt')
+    # ylims = [None, None, None, None]
     xmax = 1800
     vars_to_plot = (
         # ('epochs_seen', ['test_y_misclass', 'train_y_nll', 'learning_rate', 'grad_norm']),
-        ('seconds_seen', ['test_y_misclass', 'train_y_nll', 'learning_rate',  'grad_norm']),
+        ('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate',  'grad_norm']),
     )
 
     p = TimeSeriesPlotter()
     p.plot_from_experiment(exp_file,
                            vars_to_plot=vars_to_plot,
-                           ylims=ylims,
+                           # ylims=ylims,
                            use_xmax=xmax,
-                           fig_inches=(8,6))
+                           fig_inches=(18, 12))
+
 
     # ################
     # # FIGURE 1 / 2 #

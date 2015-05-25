@@ -22,10 +22,10 @@ from shared_params import *
 ####################
 # set up templates #
 ####################
-with open(os.path.join(this_path, 'solver_lc_template.prototxt'), 'r') as f:
+with open(os.path.join(this_path, 'solver_agl_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
-algorithm_name_template_str = "LC(" \
+algorithm_name_template_str = "AGL(" \
                               "batch=${batch_size}_" \
                               "min=${log_alpha_min}_" \
                               "max=${log_alpha_max}_" \
@@ -38,11 +38,13 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    'batch_size': [25, 50, 125, 250, 500, 1000],
+    # 'batch_size': [25, 50, 125, 250, 500, 1000],
+    'batch_size': [125],
     'log_alpha_min': [-6],
     'log_alpha_max': [8],
     'n_alphas': [99],
-    'seed': np.arange(3)
+    # 'seed': np.arange(3)
+    'seed': np.arange(1)
 }
 priority = 0
 hyper_params = append_dicts(hyper_params, cross_dict(cross_params))

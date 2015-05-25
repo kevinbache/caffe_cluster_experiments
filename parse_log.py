@@ -42,11 +42,11 @@ def parse_log(path_to_log):
 
     re_batch_size = re.compile('batch_size: (\d+)')
     re_iteration = re.compile('Iteration (\d+)')
-    re_accuracy = re.compile('output #\d+: accuracy = ([\.\d]+)')
-    re_train_loss = re.compile('Iteration \d+, loss = ([\.\d]+)')
-    re_output_loss = re.compile('output #\d+: loss = ([\.\d]+)')
-    re_lr = re.compile('lr = ([\.\d]+)')
-    re_grad_norm = re.compile('avg_grad_norm = ([\.\d]+)')
+    re_accuracy = re.compile('output #\d+: accuracy = ([\.\d\-+e]+)')
+    re_train_loss = re.compile('Iteration \d+, loss = ([\.\d\-+e]+)')
+    re_output_loss = re.compile('output #\d+: loss = ([\.\d\-+e]+)')
+    re_lr = re.compile('lr = ([\.\d\-+e]+)')
+    re_grad_norm = re.compile('avg_grad_norm = ([\.\d\-+e]+)')
     re_test_start_seconds = re.compile('Testing net')
 
     # Pick out lines of interest
@@ -163,7 +163,7 @@ def create_dataframe(train_dict_list, test_dict_list, batch_size):
     df['train_objective'] = df_train['TestLoss']
 
     df['test_accuracy'] = df_test['TestAccuracy']
-    df['test_y_misclass'] = 1 - df['train_accuracy']
+    df['test_y_misclass'] = 1 - df['test_accuracy']
     df['test_objective'] = df_test['TestLoss']
 
     # get the gradient norm / learning rate statistics
@@ -194,17 +194,17 @@ def save_df(out_file, df):
         df.save(out_file)
 
 
-def main():
-    args = parse_args()
-    train_dict_list, test_dict_list, batch_size = parse_log(args.logfile_path)
+def main(logfile_path, verbose):
+    train_dict_list, test_dict_list, batch_size = parse_log(logfile_path)
     df = create_dataframe(train_dict_list, test_dict_list, batch_size)
 
-    if args.verbose:
+    if verbose:
         print df
 
-    out_dir = os.path.dirname(args.logfile_path)
+    out_dir = os.path.dirname(logfile_path)
     out_file = os.path.join(out_dir, 'parsed_log_df.pkl')
     save_df(out_file, df)
 
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+    main(args.logfile_path, args.verbose)

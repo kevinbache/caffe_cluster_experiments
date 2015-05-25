@@ -3,9 +3,9 @@ import os
 import sys
 import numpy as np
 
-################
-# set up paths #
-################
+##################################
+# set up paths and extra imports #
+##################################
 def parent(dirname, n_levels):
     for _ in range(n_levels):
         dirname = os.path.dirname(dirname)
@@ -16,21 +16,15 @@ base_dir = parent(this_path, 1)
 sys.path.append(base_dir)
 sys.path.append(this_path)
 
-##########################
-# path dependent imports #
-##########################
 from experiment import Experiment, NamedTemplate, append_dicts, cross_dict
 from shared_params import *
-
-#############
-# load yaml #
-#############
-with open(os.path.join(this_path, 'solver_sgd_template.prototxt'), 'r') as f:
-    algorithm_yaml_template_str = f.read()
 
 ####################
 # set up templates #
 ####################
+with open(os.path.join(this_path, 'solver_sgd_template.prototxt'), 'r') as f:
+    algorithm_yaml_template_str = f.read()
+
 algorithm_name_template_str = "SGD(" \
                               "batch=${batch_size}_" \
                               "lr=${learning_rate}_" \
