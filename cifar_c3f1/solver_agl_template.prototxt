@@ -8,6 +8,17 @@ test_iter: ${n_test_on_test_iters}
 test_interval: ${n_iters_before_test}
 test_compute_loss: true
 
+display: ${n_iters_before_display}
+max_iter: ${n_max_iters}
+snapshot: ${n_iters_before_snapshot}
+snapshot_prefix: "${tmp_output_path}/snapshot"
+solver_mode: GPU
+
+random_seed: ${seed}
+
+
+solver_type: ADAGRADLINE
+
 # line search paramters
 log_high_alpha: ${log_high_alpha}
 log_low_alpha: ${log_low_alpha}
@@ -16,11 +27,3 @@ n_alphas: ${n_alphas}
 # adagrad paramters
 delta: ${delta}
 
-display: ${n_iters_before_display}
-max_iter: ${n_max_iters}
-snapshot: ${n_iters_before_snapshot}
-snapshot_prefix: "${tmp_output_path}/snapshot"
-solver_mode: GPU
-solver_type: ADAGRADLINE
-
-random_seed: ${seed}
