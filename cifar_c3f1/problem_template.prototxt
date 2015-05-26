@@ -1,4 +1,4 @@
-name: "CIFAR10_full"
+name: "Cifar10_c3f1"
 layer {
   name: "cifar"
   type: "Data"

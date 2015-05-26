@@ -8,18 +8,19 @@ test_iter: ${n_test_on_test_iters}
 test_interval: ${n_iters_before_test}
 test_compute_loss: true
 
-# SGD parameters
-base_lr: ${learning_rate}
-lr_policy: ${lr_policy}
-momentum: ${momentum}
-gamma: ${lr_decay}
-stepsize: ${n_iters_before_test}
+# line search paramters
+log_high_alpha: ${log_high_alpha}
+log_low_alpha: ${log_low_alpha}
+n_alphas: ${n_alphas}
+
+# adagrad paramters
+delta: ${delta}
 
 display: ${n_iters_before_display}
 max_iter: ${n_max_iters}
 snapshot: ${n_iters_before_snapshot}
 snapshot_prefix: "${tmp_output_path}/snapshot"
 solver_mode: GPU
-solver_type: SGD
+solver_type: ADAGRADLINE
 
 random_seed: ${seed}
