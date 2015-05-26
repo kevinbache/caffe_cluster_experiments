@@ -45,7 +45,7 @@ elif hostname == 'master':
 else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
-experiment_base_name = 'LineVs1'
+experiment_base_name = 'LineVs2'
 
 hyper_params = {
     # params ends up in run name
@@ -59,7 +59,7 @@ hyper_params = {
     'n_epochs': 100,
 
     # will override n_epochs
-    'n_max_iters': 60000,
+    'n_max_iters': 40000,
 }
 
 

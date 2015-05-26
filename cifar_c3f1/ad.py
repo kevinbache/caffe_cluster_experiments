@@ -37,8 +37,7 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    # 'train_batch_size': [125],
-    'train_batch_size': [125, 50, 250, 500],
+    'train_batch_size': [50, 125, 250, 500],
     'momentum': [0.95],
     'delta': [1e-8],
     'seed': np.arange(1)
