@@ -57,7 +57,7 @@ hyper_params = {
     'n_data_train': 60000,
     'n_data_test': 10000,
     'n_epochs_before_each_snapshot': 10,
-    'n_epochs': 500,
+    'n_epochs': 50,
 
     # # will override n_epochs
     # 'n_max_iters': 40000,
