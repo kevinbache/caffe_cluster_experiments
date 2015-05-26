@@ -159,8 +159,6 @@ class Experiment(object):
                 # assert not n_data_train % train_batch_size
                 assert not n_data_test % test_batch_size
 
-                print "%%%%%%%%%%%%%%%%%%% test_batch_size:,", test_batch_size
-
                 n_epochs = hyper_param_dict['n_epochs']
                 n_epochs_before_each_snapshot = hyper_param_dict['n_epochs_before_each_snapshot']
 
@@ -178,9 +176,12 @@ class Experiment(object):
                     'n_max_iters': n_iters_per_epoch * n_epochs,
                     'n_iters_before_snapshot': n_iters_per_epoch * n_epochs_before_each_snapshot,
                 }
+
                 # allow extra values in the hyper_param_dict to override defaults in d
-                d.update(hyper_param_dict)
-                hyper_param_dict = d
+                for k in d.keys():
+                    if k not in hyper_param_dict:
+                        hyper_param_dict[k] = d[k]
+
             # elif set(raw_required_params) <= set(hyper_param_dict.keys()):
             #     # nothing to do
             #     pass
