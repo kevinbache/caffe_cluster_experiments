@@ -11,7 +11,7 @@ layer {
   }
   data_param {
     source: "${caffe_root}/examples/mnist/mnist_train_lmdb"
-    batch_size: ${batch_size}
+    batch_size: ${train_batch_size}
     backend: LMDB
   }
 }
@@ -28,7 +28,7 @@ layer {
   }
   data_param {
     source: "${caffe_root}/examples/mnist/mnist_train_lmdb"
-    batch_size: ${batch_size}
+    batch_size: ${train_batch_size}
     backend: LMDB
   }
 }
@@ -45,7 +45,7 @@ layer {
   }
   data_param {
     source: "${caffe_root}/examples/mnist/mnist_test_lmdb"
-    batch_size: ${batch_size}
+    batch_size: ${test_batch_size}
     backend: LMDB
   }
 }
