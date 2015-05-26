@@ -159,7 +159,7 @@ class Experiment(object):
                 # assert not n_data_train % train_batch_size
                 assert not n_data_test % test_batch_size
 
-                print "%%%%%%%%%%%%%%%%%%%?%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                print "%%%%%%%%%%%%%%%%%%% test_batch_size:,", test_batch_size
 
                 n_epochs = hyper_param_dict['n_epochs']
                 n_epochs_before_each_snapshot = hyper_param_dict['n_epochs_before_each_snapshot']
