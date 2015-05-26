@@ -64,9 +64,6 @@ hyper_params = {
     'n_epochs': 90,
 }
 
-n_data_test = 50000
-
-
 # net: "models/bvlc_reference_caffenet/train_val.prototxt"
 # test_iter: 1000
 # test_interval: 1000

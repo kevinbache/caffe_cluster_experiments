@@ -45,7 +45,7 @@ elif hostname == 'master':
 else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
-experiment_base_name = 'TEST-EXPERIMENT'
+experiment_base_name = 'LineVs1'
 
 hyper_params = {
     # params ends up in run name
@@ -56,11 +56,10 @@ hyper_params = {
     'n_data_train': 50000,
     'n_data_test': 10000,
     'n_epochs_before_each_snapshot': 10,
-    'n_epochs': 50,
+    'n_epochs': 100,
 
-    # 'n_neurons_h0_sparse_init': int(n_neurons_h0 / 10),
-    # 'n_neurons_h1_sparse_init': int(n_neurons_h1 / 10),
-    # 'n_neurons_y_sparse_init': 0,
+    # will override n_epochs
+    'n_max_iters': 60000,
 }
 
 

@@ -28,7 +28,7 @@ with open(os.path.join(this_path, 'solver_sgd_template.prototxt'), 'r') as f:
 algorithm_name_template_str = "SGD(" \
                               "batch=${train_batch_size}_" \
                               "lr=${learning_rate}_" \
-                              "lrdecay=${lr_decay}_" \
+                              "lrdecay=${lr_decay}${stepsize}_" \
                               "mom=${momentum}_" \
                               "nepochs=${n_epochs}" \
                               ")"
@@ -38,14 +38,16 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    'train_batch_size': [25, 50, 125, 250, 500, 1000],
-    'learning_rate': [.01, .003, .001, .0003, .0001],
-    'lr_decay': [.99],
+    'train_batch_size': [125],
+    # 'train_batch_size': [50, 250, 500],
+    'learning_rate': np.logspace(-1, -4, 13),  # spacing of 1.77x
+    'lr_decay': [.95, .96],
     'lr_policy': ['step'],
+    'stepsize': [600],
     'momentum': [0.0],
-    'seed': np.arange(3)
+    'seed': np.arange(1)
 }
-priority = 0
+priority = 1
 hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
 
 ##################
