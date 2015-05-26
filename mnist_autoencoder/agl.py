@@ -26,7 +26,7 @@ with open(os.path.join(this_path, 'solver_agl_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
 algorithm_name_template_str = "AGL(" \
-                              "batch=${batch_size}_" \
+                              "batch=${train_batch_size}_" \
                               "min=${log_low_alpha}_" \
                               "max=${log_high_alpha}_" \
                               "n=${n_alphas}_" \
@@ -38,16 +38,14 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    # 'batch_size': [25, 50, 125, 250, 500, 1000],
-    'batch_size': [125],
+    'train_batch_size': [50, 125, 250, 500],
     'log_low_alpha': [-6],
     'log_high_alpha': [6],
-    'n_alphas': [199],
+    'n_alphas': [49, 99, 199],
     'delta': [1e-8],
-    # 'seed': np.arange(3)
-    'seed': np.arange(1)
+    'seed': np.arange(1),
 }
-priority = 0
+priority = 10
 hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
 
 ##################

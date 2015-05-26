@@ -26,7 +26,7 @@ with open(os.path.join(this_path, 'solver_ad_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
 algorithm_name_template_str = "AD(" \
-                              "batch=${batch_size}_" \
+                              "batch=${train_batch_size}_" \
                               "mom=${momentum}_" \
                               "delta=${delta}_" \
                               "nepochs=${n_epochs}" \
@@ -37,14 +37,12 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    # 'batch_size': [25, 50, 125, 250, 500, 1000],
-    'batch_size': [125],
+    'train_batch_size': [50, 125, 250, 500],
     'momentum': [0.95],
     'delta': [1e-8],
-    # 'seed': np.arange(3)
     'seed': np.arange(1)
 }
-priority = 0
+priority = 10
 hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
 
 ##################
