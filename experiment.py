@@ -169,6 +169,8 @@ class Experiment(object):
                     'n_test_on_train_iters': n_iters_per_epoch,
                     'n_test_on_test_iters': n_iters_per_test,
 
+                    'test_batch_size': test_batch_size,
+
                     'n_iters_before_display': max(int(n_iters_per_epoch / 10), 0),
                     'n_iters_before_test': n_iters_per_epoch,
                     'n_max_iters': n_iters_per_epoch * n_epochs,
