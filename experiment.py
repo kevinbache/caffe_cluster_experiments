@@ -141,11 +141,11 @@ class Experiment(object):
                                  'train_batch_size',
                                  'n_epochs_before_each_snapshot',
                                  'n_epochs']
-        iters_required_params = ['n_data_train',
-                                 'n_data_test',
-                                 'train_batch_size',
-                                 'n_iters_before_snapshot',
-                                 'n_max_iters']
+        # iters_required_params = ['n_data_train',
+        #                          'n_data_test',
+        #                          'train_batch_size',
+        #                          'n_iters_before_snapshot',
+        #                          'n_max_iters']
 
         for hyper_param_dict in hyper_param_dicts:
             if set(epoch_required_params) <= set(hyper_param_dict.keys()):
@@ -158,6 +158,8 @@ class Experiment(object):
                 n_data_test = hyper_param_dict['n_data_test']
                 # assert not n_data_train % train_batch_size
                 assert not n_data_test % test_batch_size
+
+                print "%%%%%%%%%%%%%%%%%%%?%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
 
                 n_epochs = hyper_param_dict['n_epochs']
                 n_epochs_before_each_snapshot = hyper_param_dict['n_epochs_before_each_snapshot']
