@@ -26,7 +26,7 @@ with open(os.path.join(this_path, 'solver_sgd_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
 algorithm_name_template_str = "SGD(" \
-                              "batch=${train_batch_size}_" \
+                              "batch=${batch_size}_" \
                               "lr=${learning_rate}_" \
                               "lrdecay=${lr_decay}_" \
                               "mom=${momentum}_" \
@@ -38,7 +38,7 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    'train_batch_size': [25, 50, 125, 250, 500, 1000],
+    'batch_size': [25, 50, 125, 250, 500, 1000],
     'learning_rate': [.01, .003, .001, .0003, .0001],
     'lr_decay': [.99],
     'lr_policy': ['step'],
@@ -48,9 +48,17 @@ cross_params = {
 priority = 0
 hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
 
+# from caffenet solver:
+# base_lr: 0.01
+# lr_policy: "step"
+# stepsize: 100000
+# gamma: 0.1
+
+
 ##################
 # run experiment #
 ##################
 e = Experiment(use_sge=True, DEBUG_MODE=False)
 e.run(experiment_base_name, problem_template, algorithm_template, hyper_params,
       offer_compatible_runs=False, priority=priority)
+

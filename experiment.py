@@ -135,40 +135,53 @@ class Experiment(object):
 
     @staticmethod
     def add_batch_size_params(hyper_param_dicts):
-        required_params = ['n_data_train',
-                           'n_data_test',
-                           'batch_size',
-                           'n_epochs_before_each_snapshot',
-                           'n_epochs']
+        # you can either use epoch settings or raw settings
+        epoch_required_params = ['n_data_train',
+                                 'n_data_test',
+                                 'train_batch_size',
+                                 'n_epochs_before_each_snapshot',
+                                 'n_epochs']
+        iters_required_params = ['n_data_train',
+                                 'n_data_test',
+                                 'train_batch_size',
+                                 'n_iters_before_snapshot',
+                                 'n_max_iters']
+
         for hyper_param_dict in hyper_param_dicts:
-            if set(required_params) <= set(hyper_param_dict.keys()):
-                batch_size = hyper_param_dict['batch_size']
+            if set(epoch_required_params) <= set(hyper_param_dict.keys()):
+                train_batch_size = hyper_param_dict['train_batch_size']
+                if 'test_batch_size' in hyper_param_dict:
+                    test_batch_size = hyper_param_dict['test_batch_size']
+                else:
+                    test_batch_size = train_batch_size
                 n_data_train = hyper_param_dict['n_data_train']
                 n_data_test = hyper_param_dict['n_data_test']
-                assert not n_data_train % batch_size
-                assert not n_data_test % batch_size
+                # assert not n_data_train % train_batch_size
+                assert not n_data_test % test_batch_size
 
                 n_epochs = hyper_param_dict['n_epochs']
                 n_epochs_before_each_snapshot = hyper_param_dict['n_epochs_before_each_snapshot']
 
-                n_iters_per_epoch = int(n_data_train / batch_size)
-                n_iters_per_test = int(n_data_test / batch_size)
+                n_iters_per_epoch = int(n_data_train / train_batch_size)
+                n_iters_per_test = int(n_data_test / test_batch_size)
 
                 d = {
-                    'train_batch_size': batch_size,
-                    'test_batch_size': batch_size,
-
                     'n_test_on_train_iters': n_iters_per_epoch,
                     'n_test_on_test_iters': n_iters_per_test,
 
-                    'n_iters_before_display': int(n_iters_per_epoch / 10),
+                    'n_iters_before_display': max(int(n_iters_per_epoch / 10), 0),
                     'n_iters_before_test': n_iters_per_epoch,
                     'n_max_iters': n_iters_per_epoch * n_epochs,
                     'n_iters_before_snapshot': n_iters_per_epoch * n_epochs_before_each_snapshot,
                 }
-                hyper_param_dict.update(d)
+                # allow extra values in the hyper_param_dict to override defaults in d
+                d.update(hyper_param_dict)
+                hyper_param_dict = d
+            # elif set(raw_required_params) <= set(hyper_param_dict.keys()):
+            #     # nothing to do
+            #     pass
             else:
-                missing_keys = [k for k in required_params if k not in hyper_param_dict]
+                missing_keys = [k for k in epoch_required_params if k not in hyper_param_dict]
                 raise ValueError("A hyperparameter dict is missing the keys: "
                                  + ', '.join(missing_keys))
 
