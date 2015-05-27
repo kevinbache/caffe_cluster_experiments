@@ -28,7 +28,7 @@ problem_file = os.path.join(this_path, 'problem_template.prototxt')
 with open(problem_file, 'r') as f:
     problem_yaml_template_str = f.read()
 
-problem_name_template_str = "CifarAlexCaffe-" \
+problem_name_template_str = "CifarAlexCaffe(wd=${weight_decay})-" \
                             "tag(${tag})"
 problem_template = NamedTemplate(problem_name_template_str, problem_yaml_template_str)
 
@@ -45,7 +45,7 @@ elif hostname == 'master':
 else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
-experiment_base_name = 'LineVs2'
+experiment_base_name = 'LineVs3'
 
 hyper_params = {
     # params ends up in run name
@@ -56,10 +56,12 @@ hyper_params = {
     'n_data_train': 50000,
     'n_data_test': 10000,
     'n_epochs_before_each_snapshot': 10,
-    'n_epochs': 100,
+    'n_epochs': 400,
+
+    'weight_decay': .0005,
 
     # will override n_epochs
-    'n_max_iters': 40000,
+    'n_max_iters': 160000,
 }
 
 

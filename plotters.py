@@ -1,3 +1,4 @@
+from __future__ import division
 from math import floor
 import os
 import sys
@@ -515,8 +516,15 @@ class TimeSeriesPlotter(Plotter):
         m = p.match(algorithm_name)
         batch_size = int(m.group('batchsize'))
 
-        MIN_BATCH_SIZE = 64
-        MAX_BATCH_SIZE = 1024
+        p = re.compile(r".*n=(?P<n_alphas>\d+).*")
+        m = p.match(algorithm_name)
+        if m:
+            n_alphas = int(m.group('n_alphas'))
+        else:
+            n_alphas = None
+
+        MIN_BATCH_SIZE = 50
+        MAX_BATCH_SIZE = 500
         # MIN_BATCH_SIZE = 500
         # MAX_BATCH_SIZE = 4000
         minlog = np.log2(MIN_BATCH_SIZE)
@@ -526,6 +534,10 @@ class TimeSeriesPlotter(Plotter):
         # line_width = (np.log2(batch_size) - minlog) / 2 + 1
         line_width = 2
         # step 1: put cmap_index between 0 and 1
+        # if n_alphas is not None:
+        #     cmap_index = n_alphas / 400 + .2
+        # else:
+        #     cmap_index = (np.log2(batch_size) - minlog ) / (maxlog - minlog)
         cmap_index = (np.log2(batch_size) - minlog ) / (maxlog - minlog)
 
         alpha = .9
@@ -543,6 +555,7 @@ class TimeSeriesPlotter(Plotter):
 
             # <color>, <linestyle>, <linewidth>, <alpha>, <zorder>, <line label>
             cm = pylab.get_cmap('afmhot_r')
+            print 'ducb: ', an
             return cm(cmap_index), style, line_width, alpha, 10, 'DUCB, batch =% 5d' % batch_size
         elif 'lc' in an:
             # step 2: remap values to the range i want for this map
@@ -552,19 +565,46 @@ class TimeSeriesPlotter(Plotter):
 
             # <color>, <linestyle>, <linewidth>, <alpha>, <zorder>, <line label>
             cm = pylab.get_cmap('afmhot_r')
-            return cm(cmap_index), style, line_width, alpha, 10, 'LineCurrent+1, batch =% 5d' % batch_size
-
-        elif 'adadelta' in an:
+            print 'lc: ', an
+            return cm(cmap_index), style, line_width, alpha, 10, 'LineCurrent+1, batch =% 5d, n=% 3d' % (batch_size, n_alphas )
+        elif 'adl' in an:
+            MIN_CMAP = .33
+            MAX_CMAP = .9
+            cmap_index = cmap_index * (MAX_CMAP - MIN_CMAP) + MIN_CMAP
+            cm = pylab.get_cmap('afmhot_r')
+            print 'adl: ', an
+            return cm(cmap_index), style, line_width, alpha, 5, 'ADL, batch =% 5d, n=% 3d' % (batch_size, n_alphas )
+        elif 'adadelta' in an or 'ad' in an:
             MIN_CMAP = .5
             MAX_CMAP = .9
             cmap_index = cmap_index * (MAX_CMAP - MIN_CMAP) + MIN_CMAP
             cm = pylab.get_cmap('BuGn')
+            print 'adadelta: ', an
             return cm(cmap_index), style, line_width, alpha, 5, 'AdaDelta, batch =% 5d' % batch_size
+        elif 'agl' in an:
+            # step 2: remap values to the range i want for this map
+            MIN_CMAP = .33
+            MAX_CMAP = .8
+            cmap_index = cmap_index * (MAX_CMAP - MIN_CMAP) + MIN_CMAP
+
+            # <color>, <linestyle>, <linewidth>, <alpha>, <zorder>, <line label>
+            cm = pylab.get_cmap('PuRd')
+            # cm = pylab.get_cmap('afmhot_r')
+            print 'agl: ', an
+            return cm(cmap_index), style, line_width, alpha, 10, 'AGL, batch =% 5d, n=% 3d' % (batch_size, n_alphas )
+        elif 'ag' in an:
+            MIN_CMAP = .7
+            MAX_CMAP = 1.3
+            cmap_index = cmap_index * (MAX_CMAP - MIN_CMAP) + MIN_CMAP
+            cm = pylab.get_cmap('BuPu')
+            print 'ag: ', an
+            return cm(cmap_index), style, line_width, alpha, 1, 'AdaGrad, batch =% 5d' % batch_size
         elif 'sgd' in an:
             MIN_CMAP = .7
             MAX_CMAP = 1.3
             cmap_index = cmap_index * (MAX_CMAP - MIN_CMAP) + MIN_CMAP
             cm = pylab.get_cmap('Blues')
+            print 'sgd: ', an
             return cm(cmap_index), style, line_width, alpha, 1, 'SGD, batch =% 5d' % batch_size
         else:
             raise ValueError("Algoritm name must contain one of 'ducb', 'adadelta', or 'sgd'.  " +
@@ -685,6 +725,11 @@ class TimeSeriesPlotter(Plotter):
 
                     c, style, width, alpha, zorder, label = line_style_fn(data_dir_name)
 
+                    print 'data_dir_name, label:'
+                    print data_dir_name
+                    print label
+                    print
+
                     minx = min(minx, x[-1])
                     maxx = max(maxx, x[-1])
 
@@ -706,15 +751,14 @@ class TimeSeriesPlotter(Plotter):
                     box = ax.get_position()
                     ax.set_position([box.x0, box.y0, box.width * self.legend_width_mx, box.height])
 
-                which_axis = int(floor(len(axes)/2))
-
-                ax = axes[which_axis]
+                ax = axes[0]
 
                 handles, labels = ax.get_legend_handles_labels()
                 # sort both labels and handles by labels
                 labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
 
                 # legend
+                which_axis = int(floor(len(axes)/2))
                 axes[which_axis].legend(handles,
                                         labels,
                                         bbox_to_anchor=(1, 0.5),
@@ -730,59 +774,72 @@ class TimeSeriesPlotter(Plotter):
 
 
 if __name__ == '__main__':
-    # ############
-    # # FIGURE 5 #
-    # ############
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec17_mnist_4layer_1000-1000-1000_relu_DA_epochs=2000_seed=0-2_dropout=true_max_col_norm=None----few2.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec16_mnist_3layer_800-800_relu_DA_epochs=2000_seed=2_dropout=true_max_col_norm=None----all.txt'
-    # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/rcv1_da_l2=0.0_stdev=0.0----asdf.txt'
-    # ylims = [[2.6, 3.4], [2.6, 3.4], [1e-1, 1e1], None]
-    # xmax = 300
-    # xmax = None
-    # vars_to_plot = (
-    #     # ('epochs_seen', ['test_y_misclass', 'train_y_nll', 'learning_rate', 'grad_norm']),
-    #     # ('seconds_seen', ['test_y_misclass', 'train_y_nll', 'learning_rate',  'grad_norm']),
-    #     ('seconds_seen', ['test_y_nll', 'train_y_nll', 'learning_rate',  'grad_norm']),
-    # )
-    #
-    # p = TimeSeriesPlotter()
-    # p.plot_from_experiment(exp_file,
-    #                        vars_to_plot=vars_to_plot,
-    #                        ylims=ylims,
-    #                        use_xmax=xmax)
 
-
-    ############
-    # FIGURE 4 #
-    ############
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec17_mnist_4layer_1000-1000-1000_relu_DA_epochs=2000_seed=0-2_dropout=true_max_col_norm=None----few2.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec16_mnist_3layer_800-800_relu_DA_epochs=2000_seed=2_dropout=true_max_col_norm=None----all.txt'
-    # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec16_mnist_3layer_800-800_relu_DA_epochs=2000_seed=0-2_dropout=true_max_col_norm=None_batch=64-1024----all.txt'
-    # ylims = [[0.005, 0.030], None, [1e-4, 1e1], None]
-    # xmax = 18000
-    # vars_to_plot = (
-    #     # ('epochs_seen', ['test_y_misclass', 'train_y_nll', 'learning_rate', 'grad_norm']),
-    #     ('seconds_seen', ['test_y_misclass', 'train_y_nll', 'learning_rate',  'grad_norm']),
-    # )
-    #
-    # p = TimeSeriesPlotter()
-    # p.plot_from_experiment(exp_file,
-    #                        vars_to_plot=vars_to_plot,
-    #                        ylims=ylims,
-    #                        use_xmax=xmax)
-
-
-    ############
-    # FIGURE 3 #
-    ############
     # exp_file = os.path.join(this_path,
-    #                         'output/experiments/mnist_both----2015.05.22.txt')
-    # ylims = [[.01, .03], None, [1e-2, 1e6], None]
-    # xmax = 1800
-    # vars_to_plot = (
-    #     # ('epochs_seen', ['test_y_misclass', 'train_y_nll', 'learning_rate', 'grad_norm']),
-    #     ('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate',  'grad_norm']),
-    # )
+    #                         'output/experiments/cifar_ad----2015.05.26.txt')
+    # ylims = [[.22, .35], [1e-2, 1e1], None, None]
+    # xmax = 5000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_adl----2015.05.26.txt')
+    # ylims = [[.22, .35], [1e-2, 1e1], None, None]
+    # xmax = 5000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_lc----2015.05.26.txt')
+    # ylims = [[.22, .35], [1e-2, 1e1], None, None]
+    # xmax = 5000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_agl----2015.05.26.txt')
+    # ylims = [[.22, .35], [1e-2, 1e1], None, None]
+    # xmax = 5000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_ad-adl-agl----2015.05.26.txt')
+    # ylims = [[.22, .35], None, None, None]
+    # xmax = 5000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_ad-adl----2015.05.26.txt')
+    # ylims = [[.22, .35], None, None, None]
+    # xmax = 5000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective']),)
     #
     # p = TimeSeriesPlotter()
     # p.plot_from_experiment(exp_file,
@@ -791,122 +848,28 @@ if __name__ == '__main__':
     #                        use_xmax=xmax,
     #                        fig_inches=(18, 12))
 
-    exp_file = os.path.join(this_path,
-                            'output/experiments/cifar_scale_test----2015.05.24.txt')
-    # ylims = [None, None, None, None]
-    xmax = 1800
-    vars_to_plot = (
-        # ('epochs_seen', ['test_y_misclass', 'train_y_nll', 'learning_rate', 'grad_norm']),
-        ('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate',  'grad_norm']),
-    )
-
-    p = TimeSeriesPlotter()
-    p.plot_from_experiment(exp_file,
-                           vars_to_plot=vars_to_plot,
-                           # ylims=ylims,
-                           use_xmax=xmax,
-                           fig_inches=(18, 12))
-
-
-    # ################
-    # # FIGURE 1 / 2 #
-    # ################
-    # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec16_mnist_3layer_500-300_sigmoid_DAS_epochs=500_seed=0-2----all.txt'
-    # # plot_base_name, _ = exp_file.split('----')
-    # plot_addon_name = ''
-    # WRITE_GIF = True
-    # sp = ScatterPlotter()
-    # xlims = (.01, .04)
-    # time_step = 5
-    # last_epoch = 500
-    # out_images = sp.plot_from_experiment(exp_file,
-    #                                      time_slices=np.arange(time_step, last_epoch+time_step, time_step),
-    #                                      do_group=True,
-    #                                      sync_margins_across_times=True,
-    #                                      x_lims = xlims,
-    #                                      plot_addon_name=plot_addon_name)
-    # if WRITE_GIF:
-    #     print 'Writing gif from files:'
-    #     RESIZE_TO = .5
-    #     SECS_PER_FRAME = .1
-    #     gif_name = os.path.basename(exp_file).split('----')[0] + plot_addon_name + '.gif'
-    #     gif_dir = os.path.dirname(out_images[0])
-    #     gif_fullfile = os.path.join(gif_dir, gif_name)
-    #     print gif_name
-    #     for f in out_images:
-    #         print '  ' + f
-    #     from utils.make_gif import make_gif
-    #     make_gif(gif_fullfile, out_images, SECS_PER_FRAME, RESIZE_TO)
-    #     print 'Done'
-    #     print 'output_gif:', gif_fullfile
-
-
-
-
-
-
-    # ##################
-    # # ScatterPlotter #
-    # ##################
-    # # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/hinton_mnist_seeds012----seed012.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/NEW_CHANNELS_TEST----few.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/mnist_dropout_da_3seeds_colnorm15----asdf.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/mnist_3layer_500-300_sigmoid_DS_epochs=500_seed=0-2----asdf.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec16_mnist_3layer_500-300_sigmoid_DS_epochs=500_seed=0----few.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec16_mnist_3layer_500-300_sigmoid_DAS_epochs=500_seed=0-2----all.txt'
-    # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/rcv1_da_all----asdf.txt'
-    # # plot_base_name, _ = exp_file.split('----')
-    # plot_addon_name = ''
-    # WRITE_GIF = True
-    # sp = ScatterPlotter()
-    # # xlims = (.01, .04)
-    # xlims = (.25, .3)
-    # time_step = 1
-    # last_epoch = 100
-    # vars_to_plot = ('test_y_nll', 'train_y_nll',)
-    # out_images = sp.plot_from_experiment(exp_file,
-    #                                      time_slices=np.arange(time_step, last_epoch+time_step, time_step),
-    #                                      vars_to_plot=vars_to_plot,
-    #                                      do_group=True,
-    #                                      sync_margins_across_times=True,
-    #                                      x_lims = xlims,
-    #                                      plot_addon_name=plot_addon_name)
-    # if WRITE_GIF:
-    #     print 'Writing gif from files:'
-    #     RESIZE_TO = .5
-    #     SECS_PER_FRAME = .2
-    #     gif_name = os.path.basename(exp_file).split('----')[0] + plot_addon_name + '.gif'
-    #     gif_dir = os.path.dirname(out_images[0])
-    #     gif_fullfile = os.path.join(gif_dir, gif_name)
-    #     print gif_name
-    #     for f in out_images:
-    #         print '  ' + f
-    #     from utils.make_gif import make_gif
-    #     make_gif(gif_fullfile, out_images, SECS_PER_FRAME, RESIZE_TO)
-    #     print 'Done'
-    # #     print 'output_gif:', gif_fullfile
-
-    # #####################
-    # # TimeSeriesPlotter #
-    # #####################
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/sigmoid_seeds----adadelta_ducb_seed1.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/hinton_mnist----seed0.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/DROPOUT_TEST----ducb_ada.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/mnist_3layer_898-1532_ada_ducb_sgd_seed=2----asdf.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/mnist_3layer_500-300_sigmoid_DSA_seed=1----asdf.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec16_mnist_3layer_500-300_sigmoid_DS_epochs=500_seed=0----few.txt'
-    # # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec16_mnist_3layer_500-300_sigmoid_DA_epochs=500_seed=0-2----all.txt'
-    # exp_file = '/Users/kevin/projects/eyes_open/output/experiments/dec16_mnist_3layer_500-300_sigmoid_best_of_seed1----all.txt'
-    #
-    # ylims = [[0.01, 0.030], None, [1e-3, 1e1], None]
-    # xmax = 1500
-    # vars_to_plot = (
-    #     # ('epochs_seen', ['test_y_misclass', 'train_y_nll', 'learning_rate', 'grad_norm']),
-    #     ('seconds_seen', ['test_y_misclass', 'train_y_nll', 'learning_rate',  'grad_norm']),
-    # )
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_ag-agl----2015.05.26.txt')
+    # ylims = [[.2, .5], None, None, None]
+    # xmax = 2500
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate',  'grad_norm']),)
     #
     # p = TimeSeriesPlotter()
     # p.plot_from_experiment(exp_file,
     #                        vars_to_plot=vars_to_plot,
     #                        ylims=ylims,
-    #                        use_xmax=xmax)
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_all_adaptive----2015.05.26.txt')
+    # ylims = [[.2, .35], None, None, None]
+    # xmax = 2500
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate',  'grad_norm']),)
+    #
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))

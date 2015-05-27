@@ -28,7 +28,7 @@ problem_file = os.path.join(this_path, 'problem_template.prototxt')
 with open(problem_file, 'r') as f:
     problem_yaml_template_str = f.read()
 
-problem_name_template_str = "MnistAuto-" \
+problem_name_template_str = "MnistAuto(wd=${weight_decay})-" \
                             "tag(${tag})"
 problem_template = NamedTemplate(problem_name_template_str, problem_yaml_template_str)
 
