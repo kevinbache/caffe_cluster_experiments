@@ -25,7 +25,7 @@ solver_type: ADAGRAD
 base_lr: ${learning_rate}
 lr_policy: "${lr_policy}"
 gamma: ${lr_decay}
-stepsize: ${n_iters_before_test}
+stepsize: ${stepsize}
 
 # adagrad paramters
 delta: ${delta}
