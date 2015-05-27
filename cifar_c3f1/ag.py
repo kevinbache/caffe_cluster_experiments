@@ -28,7 +28,7 @@ with open(os.path.join(this_path, 'solver_ag_template.prototxt'), 'r') as f:
 algorithm_name_template_str = "AG(" \
                               "batch=${train_batch_size}_" \
                               "lr=${learning_rate}_" \
-                              "lrdecay=${lr_decay}${stepsize}_" \
+                              "lrdecay=${lr_decay}-${stepsize}_" \
                               "nepochs=${n_epochs}" \
                               ")"
 algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_template_str)

@@ -16,6 +16,8 @@ solver_mode: GPU
 
 random_seed: ${seed}
 
+weight_decay: ${weight_decay}
+
 
 solver_type: ADAGRADLINE
 

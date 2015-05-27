@@ -58,6 +58,8 @@ hyper_params = {
     'n_epochs_before_each_snapshot': 10,
     'n_epochs': 400,
 
+    'weight_decay': .0005,
+
     # will override n_epochs
     'n_max_iters': 160000,
 }
