@@ -23,7 +23,7 @@ solver_type: ADAGRAD
 
 # adagrad parameters
 base_lr: ${learning_rate}
-lr_policy: "step"
+lr_policy: "${lr_policy}"
 gamma: ${lr_decay}
 stepsize: ${n_iters_before_test}
 
