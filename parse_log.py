@@ -40,9 +40,18 @@ def parse_log(path_to_log):
     for the two dict_lists
     """
 
+# I0526 13:50:19.771880 28824 solver.cpp:319] Test loss: 2.65821
+# I0526 13:50:19.772948 28824 solver.cpp:332]     Test net output #0: cross_entropy_loss = 65.4734
+# I0526 13:50:19.772971 28824 solver.cpp:332]     Test net output #1: l2_error = 2.65821 (* 1 = 2.65821 loss)
+# I0526 13:50:19.772979 28824 solver.cpp:283] Iteration 24000, Testing net (#1)
+# I0526 13:50:20.337695 28824 solver.cpp:319] Test loss: 2.78423
+# I0526 13:50:20.337750 28824 solver.cpp:332]     Test net output #0: cross_entropy_loss = 65.8907
+# I0526 13:50:20.337774 28824 solver.cpp:332]     Test net output #1: l2_error = 2.78423 (* 1 = 2.78423 loss)
+
     re_batch_size = re.compile('batch_size: (\d+)')
     re_iteration = re.compile('Iteration (\d+)')
     re_accuracy = re.compile('output #\d+: accuracy = ([\.\d\-+e]+)')
+    re_ce = re.compile('output #\d+: cross_entropy_loss = ([\.\d\-+e]+)')
     re_train_loss = re.compile('Iteration \d+, loss = ([\.\d\-+e]+)')
     re_output_loss = re.compile('output #\d+: loss = ([\.\d\-+e]+)')
     re_lr = re.compile('lr = ([\.\d\-+e]+)')
@@ -97,6 +106,10 @@ def parse_log(path_to_log):
             accuracy_match = re_accuracy.search(line)
             if accuracy_match and get_line_type(line) == 'test':
                 test_accuracy = float(accuracy_match.group(1))
+
+            ce_match = re_ce.search(line)
+            if ce_match and get_line_type(line) == 'test':
+                test_accuracy = float(ce_match.group(1))
 
             train_loss_match = re_train_loss.search(line)
             if train_loss_match:
@@ -196,15 +209,19 @@ def save_df(out_file, df):
 
 def main(logfile_path, verbose):
     train_dict_list, test_dict_list, batch_size = parse_log(logfile_path)
-    df = create_dataframe(train_dict_list, test_dict_list, batch_size)
+    if len(train_dict_list) > 0:
+        df = create_dataframe(train_dict_list, test_dict_list, batch_size)
 
-    if verbose:
-        print df
+        if verbose:
+            print df
 
-    out_dir = os.path.dirname(logfile_path)
-    out_file = os.path.join(out_dir, 'parsed_log_df.pkl')
-    save_df(out_file, df)
+        out_dir = os.path.dirname(logfile_path)
+        out_file = os.path.join(out_dir, 'parsed_log_df.pkl')
+        save_df(out_file, df)
 
 if __name__ == '__main__':
     args = parse_args()
     main(args.logfile_path, args.verbose)
+
+
+

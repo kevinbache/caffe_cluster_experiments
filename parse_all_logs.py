@@ -10,7 +10,7 @@ sys.path += [this_path]
 
 import parse_log
 
-default_root = os.path.join(this_path, 'output')
+default_root = os.path.join(this_path, 'output', 'runs')
 
 def find_files_recursive(root_path, pattern):
     """
@@ -37,6 +37,11 @@ def parse_my_args():
     parser.add_argument('--root_path',
                         default = default_root,
                         help='Path to recursively search for error.log files to parse.')
+
+    parser.add_argument('--pattern',
+                        default = 'error.log',
+                        help='Pattern to search for')
+
 
     parser.add_argument('--verbose',
                         action='store_true',

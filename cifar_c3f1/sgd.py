@@ -38,11 +38,11 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    'train_batch_size': [50, 125, 250, 500],
+    'train_batch_size': [125, 250],
     'learning_rate': np.logspace(-1, -3, 7),  # spacing of 2.15x
-    'lr_decay': [.8, .87],
+    'lr_decay': [.1, .1**.5, 1],
     'lr_policy': ['step'],
-    'stepsize': [1600],
+    'stepsize': [40000],
     'momentum': [0.0],
     'seed': np.arange(1)
 }
