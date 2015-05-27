@@ -23,7 +23,7 @@ solver_type: SGD
 
 # SGD parameters
 base_lr: ${learning_rate}
-lr_policy: ${lr_policy}
+lr_policy: "${lr_policy}"
 momentum: ${momentum}
 gamma: ${lr_decay}
 stepsize: ${n_iters_before_test}
