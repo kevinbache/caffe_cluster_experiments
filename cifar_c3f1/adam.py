@@ -28,8 +28,8 @@ with open(os.path.join(this_path, 'solver_adam_template.prototxt'), 'r') as f:
 
 algorithm_name_template_str = "ADAM(" \
                               "batch=${train_batch_size}_" \
-                              "lr=${base_lr}_"
-                              "lr_policy=${lr_policy}_"
+                              "lr=${base_lr}_" \
+                              "lr_policy=${lr_policy}_" \
                               "beta1=${beta1}_" \
                               "beta2=${beta2}_" \
                               "nepochs=${n_epochs}" \
@@ -41,7 +41,11 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 ##########
 cross_params = {
     'train_batch_size': [125, 250],
-    'momentum': [0.95],
+    'base_lr': [.001],  # spacing of 2.15x
+    'lr_policy': ['fixed'],
+    'beta1': [.9],
+    'beta2': [.999],
+    'lambda': [1-1e8],
     'delta': [1e-8],
     'seed': np.arange(3)
 }
