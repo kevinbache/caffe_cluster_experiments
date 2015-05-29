@@ -53,7 +53,7 @@ hyper_params = {
     'params': location,
     'tag': experiment_base_name,
 
-    'imagenet_lmdbs_dir': '/imagenet',
+    'imagenet_lmdbs_dir': '/storage/data/imagenet',
 
     'n_data_train': 1281167,
     'n_epochs_before_each_snapshot': 1,
