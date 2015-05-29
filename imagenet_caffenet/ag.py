@@ -25,10 +25,10 @@ from shared_params import *
 with open(os.path.join(this_path, 'solver_ag_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
-algorithm_name_template_str = "AdaGrad(" \
-                              "batch=${batch_size}_" \
+algorithm_name_template_str = "AG(" \
+                              "batch=${train_batch_size}_" \
                               "lr=${learning_rate}_" \
-                              "lrdecay=${lr_decay}_" \
+                              "lrdecay=${lr_decay}-${stepsize}_" \
                               "nepochs=${n_epochs}" \
                               ")"
 algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_template_str)
@@ -37,15 +37,15 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-     # 'batch_size': [25, 50, 125, 250, 500, 1000],
-    'batch_size': [125],
-    'learning_rate': [1, .03, .01, .003, .001, .0003],
-    'lr_decay': [.99],
+    'train_batch_size': [125, 250],
+    'learning_rate': np.logspace(-1, -3, 7),  # spacing of 2.15x
+    'lr_decay': [.1, .1**.5, 1],
+    'lr_policy': ['step'],
+    'stepsize': [40000],
     'delta': [1e-8],
-    # 'seed': np.arange(3)
     'seed': np.arange(1)
 }
-priority = 0
+priority = 10
 hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
 
 ##################

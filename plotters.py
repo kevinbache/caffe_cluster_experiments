@@ -567,6 +567,13 @@ class TimeSeriesPlotter(Plotter):
             cm = pylab.get_cmap('afmhot_r')
             print 'lc: ', an
             return cm(cmap_index), style, line_width, alpha, 10, 'LineCurrent+1, batch =% 5d, n=% 3d' % (batch_size, n_alphas )
+        elif 'adam' in an:
+            MIN_CMAP = .33
+            MAX_CMAP = .9
+            cmap_index = cmap_index * (MAX_CMAP - MIN_CMAP) + MIN_CMAP
+            cm = pylab.get_cmap('Blues')
+            print 'adl: ', an
+            return cm(cmap_index), style, line_width, alpha, 5, 'Adam, batch =% 5d' % (batch_size)
         elif 'adl' in an:
             MIN_CMAP = .33
             MAX_CMAP = .9
@@ -774,6 +781,42 @@ class TimeSeriesPlotter(Plotter):
 
 
 if __name__ == '__main__':
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_sgd----2015.05.28.txt')
+    # ylims = [[.20, .35], [1e-2, 1e1], None, None]
+    # xmax = 10000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_ad----2015.05.28.txt')
+    # ylims = [[.20, .35], [1e-2, 1e1], None]
+    # xmax = 10000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'grad_norm']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_adam-agl----2015.05.28.txt')
+    # ylims = [[.20, .35], [1e-2, 1e1], None]
+    # xmax = 20000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'grad_norm']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
 
     # exp_file = os.path.join(this_path,
     #                         'output/experiments/cifar_ad----2015.05.26.txt')
@@ -867,6 +910,84 @@ if __name__ == '__main__':
     # xmax = 2500
     # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate',  'grad_norm']),)
     #
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
+
+    ##########################
+    # 2015.05.29 - Cifar Vs3 #
+    ##########################
+
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_sgd----2015.05.28.txt')
+    # ylims = [[.20, .35], [1e-2, 1e1], None, None]
+    # xmax = 10000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+    #
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_ad----2015.05.28.txt')
+    # ylims = [[.20, .35], [1e-2, 1e1], None, None]
+    # xmax = 10000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+    #
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_adam----2015.05.28.txt')
+    # ylims = [[.20, .35], [1e-2, 1e1], None, None]
+    # xmax = 10000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+    #
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_lc----2015.05.28.txt')
+    # ylims = [[.20, .35], [1e-2, 1e1], None, None]
+    # xmax = 10000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+    #
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_ag----2015.05.28.txt')
+    # ylims = [[.20, .35], [1e-2, 1e1], None, None]
+    # xmax = 10000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/cifar_agl----2015.05.28.txt')
+    # ylims = [[.20, .35], [1e-2, 1e1], None, None]
+    # xmax = 10000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
     # p = TimeSeriesPlotter()
     # p.plot_from_experiment(exp_file,
     #                        vars_to_plot=vars_to_plot,

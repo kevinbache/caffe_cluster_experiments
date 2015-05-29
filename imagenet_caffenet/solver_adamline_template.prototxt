@@ -19,14 +19,12 @@ random_seed: ${seed}
 weight_decay: ${weight_decay}
 
 
-solver_type: ADADELTALINE
-
-# line search parameters
-log_high_alpha: ${log_high_alpha}
-log_low_alpha: ${log_low_alpha}
-n_alphas: ${n_alphas}
+solver_type: ADAMLINE
 
 # adadelta parameters
-momentum: ${momentum}
-delta: ${delta}
+beta1: ${beta1}
+beta2: ${beta2}
+lambda: .99999999
+delta: 0.00000001
+
 

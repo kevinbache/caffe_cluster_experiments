@@ -26,7 +26,7 @@ with open(os.path.join(this_path, 'solver_lc_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
 algorithm_name_template_str = "LC(" \
-                              "batch=${train_batch_size}_" \
+                              "batch=${batch_size}_" \
                               "min=${log_low_alpha}_" \
                               "max=${log_high_alpha}_" \
                               "n=${n_alphas}_" \
@@ -38,9 +38,9 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    'train_batch_size': [125, 250],
+    'batch_size': [25, 50, 125, 250, 500, 1000],
     'log_low_alpha': [-6],
-    'log_high_alpha': [6],
+    'log_high_alpha': [8],
     'n_alphas': [99],
     'seed': np.arange(3)
 }

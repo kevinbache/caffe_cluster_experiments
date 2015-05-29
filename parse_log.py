@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 Parse training log to get loss values / gradient norms / learning rates.
 This is a modified version of parse_log.py that is released by Caffe
@@ -56,6 +55,8 @@ def parse_log(path_to_log):
     re_output_loss = re.compile('output #\d+: loss = ([\.\d\-+e]+)')
     re_lr = re.compile('lr = ([\.\d\-+e]+)')
     re_grad_norm = re.compile('avg_grad_norm = ([\.\d\-+e]+)')
+    re_step_norm = re.compile('avg_step_norm = ([\.\d\-+e]+)')
+    re_eff_lr = re.compile('avg_effective_learning_rate = ([\.\d\-+e]+)')
     re_test_start_seconds = re.compile('Testing net')
 
     # Pick out lines of interest
@@ -64,6 +65,7 @@ def parse_log(path_to_log):
     test_start_seconds = float('NaN')
     learning_rate = float('NaN')
     avg_grad_norm = float('NaN')
+    avg_step_norm = float('NaN')
     batch_size = None
     train_dict_list = []
     test_dict_list = []
@@ -99,6 +101,14 @@ def parse_log(path_to_log):
             if grad_norm_match:
                 avg_grad_norm = float(grad_norm_match.group(1))
 
+            step_norm_match = re_step_norm.search(line)
+            if step_norm_match:
+                avg_step_norm = float(step_norm_match.group(1))
+
+            eff_lr_match = re_eff_lr.search(line)
+            if eff_lr_match:
+                eff_lr = float(eff_lr_match.group(1))
+
             test_start_match = re_test_start_seconds.search(line)
             if test_start_match:
                 test_start_seconds = seconds
@@ -118,7 +128,9 @@ def parse_log(path_to_log):
                                         'Seconds': seconds,
                                         'TrainingLoss': train_loss,
                                         'LearningRate': learning_rate,
-                                        'AvgGradientNorm': avg_grad_norm})
+                                        'AvgGradientNorm': avg_grad_norm,
+                                        'AvgStepNorm': avg_step_norm,
+                                        'EffectiveLearningRate': eff_lr})
 
             output_loss_match = re_output_loss.search(line)
             if output_loss_match and get_line_type(line) == 'test':
@@ -193,6 +205,10 @@ def create_dataframe(train_dict_list, test_dict_list, batch_size):
     df['learning_rate'] = gb_extra['LearningRate'].mean()
     df['grad_norm_last'] = gb_extra['AvgGradientNorm'].last()
     df['grad_norm'] = gb_extra['AvgGradientNorm'].mean()
+    df['step_norm_last'] = gb_extra['AvgStepNorm'].last()
+    df['step_norm'] = gb_extra['AvgStepNorm'].mean()
+    df['effective_lr_last'] = gb_extra['EffectiveLearningRate'].last()
+    df['effective_lr'] = gb_extra['EffectiveLearningRate'].mean()
     df['training_displays_count'] = gb_extra['LearningRate'].count()
 
     return df

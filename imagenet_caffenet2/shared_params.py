@@ -28,7 +28,7 @@ problem_file = os.path.join(this_path, 'problem_template.prototxt')
 with open(problem_file, 'r') as f:
     problem_yaml_template_str = f.read()
 
-problem_name_template_str = "CifarAlexCaffe(wd=${weight_decay})-" \
+problem_name_template_str = "CifarAlexCaffe-" \
                             "tag(${tag})"
 problem_template = NamedTemplate(problem_name_template_str, problem_yaml_template_str)
 
@@ -53,15 +53,15 @@ hyper_params = {
     'params': location,
     'tag': experiment_base_name,
 
-    'imagenet_lmdbs_dir': '/imagenet',
+    'imagenet_lmdbs_dir': '/storage/data/imagenet',
 
     'n_data_train': 1281167,
     'n_epochs_before_each_snapshot': 1,
 
-    'weight_decay': .0005,
-
     'n_data_test': 50000,
     'test_batch_size': 50,
+
+    'n_iters_before_display': 20,
 
     'n_epochs': 90,
 }

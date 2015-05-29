@@ -22,14 +22,16 @@ from shared_params import *
 ####################
 # set up templates #
 ####################
-with open(os.path.join(this_path, 'solver_lc_template.prototxt'), 'r') as f:
+with open(os.path.join(this_path, 'solver_adam_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
-algorithm_name_template_str = "LC(" \
+
+algorithm_name_template_str = "ADAM(" \
                               "batch=${train_batch_size}_" \
-                              "min=${log_low_alpha}_" \
-                              "max=${log_high_alpha}_" \
-                              "n=${n_alphas}_" \
+                              "lr=${base_lr}_" \
+                              "lr_policy=${lr_policy}_" \
+                              "beta1=${beta1}_" \
+                              "beta2=${beta2}_" \
                               "nepochs=${n_epochs}" \
                               ")"
 algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_template_str)
@@ -39,12 +41,15 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 ##########
 cross_params = {
     'train_batch_size': [125, 250],
-    'log_low_alpha': [-6],
-    'log_high_alpha': [6],
-    'n_alphas': [99],
+    'base_lr': [.001],  # spacing of 2.15x
+    'lr_policy': ['fixed'],
+    'beta1': [.9],
+    'beta2': [.999],
+    'lambda': [1-1e8],
+    'delta': [1e-8],
     'seed': np.arange(3)
 }
-priority = 0
+priority = 10
 hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
 
 ##################
