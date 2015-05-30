@@ -98,7 +98,7 @@ hyper_params = {
 
 
     'n_max_iters': 1000000,  # will override n_epochs
-    'max_seconds': 5 * 3600, # will override n_max_iters
+    'max_seconds': 4 * 3600, # will override n_max_iters
 }
 
 def param_extender(hyper_param_dict):
