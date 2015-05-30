@@ -46,7 +46,7 @@ cross_params = {
     'n_alphas': [99],
 }
 all_cross_params.update(cross_params)
-priority = 1
+priority = 10
 hyper_param_dicts = append_dicts(hyper_params, cross_dict(all_cross_params))
 
 # extend corssed params with extra values (e.g. 'weight_filler_name')
