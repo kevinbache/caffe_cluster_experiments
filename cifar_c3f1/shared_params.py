@@ -45,10 +45,6 @@ def count_cross_possibilities(cross_param_dict):
 def print_hyper_param_dicts(n_shared_cross, cross_param_dict, hyper_param_dicts, alg_template):
     for hpd in hyper_param_dicts:
         print problem_template.fill_name(hpd), alg_template.fill_name(hpd)
-        # for k, v in hpd.items():
-        #     print '%s: %s' % (k, v)
-        # print '=================================================='
-        # print
 
     n_total_cross = count_cross_possibilities(cross_param_dict)
     print '======================================================'
@@ -93,12 +89,12 @@ hyper_params = {
         'weight_filler': ['      type: "gaussian"\n      std: 0.001\n',
                           '      type: "xavier"\n'],
         'train_batch_size': [50, 80, 125, 250],
-        'seed': range(2),
+        'seed': range(1),
     },
 
 
     'n_max_iters': 1000000,  # will override n_epochs
-    'max_seconds': 4 * 3600, # will override n_max_iters
+    'max_seconds': 3 * 3600, # will override n_max_iters
 }
 
 def param_extender(hyper_param_dict):

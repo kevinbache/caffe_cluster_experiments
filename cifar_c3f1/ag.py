@@ -41,7 +41,7 @@ del hyper_params['shared_cross_params']
 n_shared_cross = count_cross_possibilities(all_cross_params)
 cross_params = {
     'learning_rate': np.logspace(-1, -3, 5),  # spacing of 3.1x
-    'lr_decay': [.1, .1**.5, 1],
+    'lr_decay': [.1, .1**.5],
     'lr_policy': ['step'],
     'stepsize': [80000],
     'delta': [1e-8],
