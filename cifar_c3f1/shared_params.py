@@ -93,7 +93,7 @@ hyper_params = {
         'weight_filler': ['      type: "gaussian"\n      std: 0.001\n',
                           '      type: "xavier"\n'],
         'train_batch_size': [50, 80, 125, 250],
-        'seed': range(3),
+        'seed': range(2),
     },
 
 
