@@ -72,7 +72,7 @@ else:
 
 experiment_base_name = 'CifarVs5'
 
-DRY_RUN = False
+DRY_RUN = True
 
 hyper_params = {
     # params ends up in run name
