@@ -19,6 +19,8 @@ this_path = os.path.dirname(os.path.realpath(__file__))
 base_dir = parent(this_path, 1)
 sys.path.append(base_dir)
 
+solvers_dir = os.path.join(base_dir, 'solver_templates')
+
 from experiment import NamedTemplate
 
 ######################
@@ -45,7 +47,7 @@ elif hostname == 'master':
 else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
-experiment_base_name = 'LineVs3'
+experiment_base_name = 'LineVs4'
 
 hyper_params = {
     # params ends up in run name

@@ -22,14 +22,16 @@ from shared_params import *
 ####################
 # set up templates #
 ####################
-with open(os.path.join(this_path, 'solver_sgd_template.prototxt'), 'r') as f:
+with open(os.path.join(this_path, 'solver_adam_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
-algorithm_name_template_str = "SGD(" \
-                              "batch=${batch_size}_" \
-                              "lr=${learning_rate}_" \
-                              "lrdecay=${lr_decay}_" \
-                              "mom=${momentum}_" \
+
+algorithm_name_template_str = "ADAM(" \
+                              "batch=${train_batch_size}_" \
+                              "lr=${base_lr}_" \
+                              "lr_policy=${lr_policy}_" \
+                              "beta1=${beta1}_" \
+                              "beta2=${beta2}_" \
                               "nepochs=${n_epochs}" \
                               ")"
 algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_template_str)
@@ -38,22 +40,17 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    'batch_size': [128, 256],
-    'learning_rate': [.01, .003, .001, .0003, .0001],
-    'lr_decay': [.99],
-    'lr_policy': ['step'],
-    'momentum': [0.0],
+    'train_batch_size': [125, 250],
+    'base_lr': [.001],  # spacing of 2.15x
+    'lr_policy': ['fixed'],
+    'beta1': [.9],
+    'beta2': [.999],
+    'lambda': [1-1e8],
+    'delta': [1e-8],
     'seed': np.arange(3)
 }
-priority = 0
+priority = 10
 hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
-
-# from caffenet solver:
-# base_lr: 0.01
-# lr_policy: "step"
-# stepsize: 100000
-# gamma: 0.1
-
 
 ##################
 # run experiment #
@@ -61,4 +58,3 @@ hyper_params = append_dicts(hyper_params, cross_dict(cross_params))
 e = Experiment(use_sge=True, DEBUG_MODE=False)
 e.run(experiment_base_name, problem_template, algorithm_template, hyper_params,
       offer_compatible_runs=False, priority=priority)
-

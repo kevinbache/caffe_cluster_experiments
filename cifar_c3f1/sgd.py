@@ -22,7 +22,7 @@ from shared_params import *
 ####################
 # set up templates #
 ####################
-with open(os.path.join(this_path, 'solver_sgd_template.prototxt'), 'r') as f:
+with open(os.path.join(solvers_dir, 'solver_sgd_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
 algorithm_name_template_str = "SGD(" \

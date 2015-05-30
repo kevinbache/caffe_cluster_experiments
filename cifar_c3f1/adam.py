@@ -22,7 +22,7 @@ from shared_params import *
 ####################
 # set up templates #
 ####################
-with open(os.path.join(this_path, 'solver_adam_template.prototxt'), 'r') as f:
+with open(os.path.join(solvers_dir, 'solver_adam_template.prototxt'), 'r') as f:
     algorithm_yaml_template_str = f.read()
 
 
