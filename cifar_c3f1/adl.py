@@ -40,7 +40,7 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    'train_batch_size': [125, 250],
+    # 'train_batch_size': [50, 80, 125, 250],
     'log_low_alpha': [-6],
     'log_high_alpha': [6],
     'n_alphas': [99],
