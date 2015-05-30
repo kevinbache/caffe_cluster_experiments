@@ -48,6 +48,7 @@ else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
 experiment_base_name = 'LineVs4'
+experiment_base_name = 'TEMP'
 
 hyper_params = {
     # params ends up in run name
