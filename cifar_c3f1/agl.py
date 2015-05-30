@@ -63,5 +63,5 @@ if DRY_RUN:
     exit()
 
 e = Experiment(use_sge=True, DEBUG_MODE=False)
-e.run(experiment_base_name, problem_template, algorithm_template, hyper_params,
+e.run(experiment_base_name, problem_template, algorithm_template, hyper_param_dicts,
       offer_compatible_runs=False, priority=priority)
