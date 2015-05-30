@@ -89,12 +89,12 @@ hyper_params = {
         'weight_filler': ['      type: "gaussian"\n      std: 0.001\n',
                           '      type: "xavier"\n'],
         'train_batch_size': [50, 80, 125, 250],
-        'seed': range(1),
+        'seed': range(2),
     },
 
 
     'n_max_iters': 1000000,  # will override n_epochs
-    'max_seconds': 3 * 3600, # will override n_max_iters
+    'max_seconds': 4 * 3600, # will override n_max_iters
 }
 
 def param_extender(hyper_param_dict):
