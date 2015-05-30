@@ -8,10 +8,10 @@ layer {
     phase: TRAIN
   }
   transform_param {
-    mean_file: "${caffe_root}/examples/cifar10/mean.binaryproto"
+    mean_file: "${cifar_data}/mean.binaryproto"
   }
   data_param {
-    source: "${caffe_root}/examples/cifar10/cifar10_train_lmdb"
+    source: "${cifar_data}cifar10_train_lmdb"
     batch_size: ${train_batch_size}
     backend: LMDB
   }
@@ -26,10 +26,10 @@ layer {
     stage: "test-on-train"
   }
   transform_param {
-    mean_file: "${caffe_root}/examples/cifar10/mean.binaryproto"
+    mean_file: "${cifar_data}/mean.binaryproto"
   }
   data_param {
-    source: "${caffe_root}/examples/cifar10/cifar10_train_lmdb"
+    source: "${cifar_data}/cifar10_train_lmdb"
     batch_size: ${train_batch_size}
     backend: LMDB
   }
@@ -44,10 +44,10 @@ layer {
     stage: "test-on-test"
   }
   transform_param {
-    mean_file: "${caffe_root}/examples/cifar10/mean.binaryproto"
+    mean_file: "${cifar_data}/mean.binaryproto"
   }
   data_param {
-    source: "${caffe_root}/examples/cifar10/cifar10_test_lmdb"
+    source: "${cifar_data}/cifar10_test_lmdb"
     batch_size: ${test_batch_size}
     backend: LMDB
   }
