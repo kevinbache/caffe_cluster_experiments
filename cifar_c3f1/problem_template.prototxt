@@ -11,7 +11,7 @@ layer {
     mean_file: "${cifar_data}/mean.binaryproto"
   }
   data_param {
-    source: "${cifar_data}cifar10_train_lmdb"
+    source: "${cifar_data}/cifar10_train_lmdb"
     batch_size: ${train_batch_size}
     backend: LMDB
   }
