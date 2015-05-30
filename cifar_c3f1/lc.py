@@ -52,7 +52,6 @@ hyper_param_dicts = append_dicts(hyper_params, cross_dict(all_cross_params))
 # extend corssed params with extra values (e.g. 'weight_filler_name')
 hyper_param_dicts = [param_extender(hpd) for hpd in hyper_param_dicts]
 
-
 ##################
 # run experiment #
 ##################

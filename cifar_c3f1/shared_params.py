@@ -45,9 +45,10 @@ def count_cross_possibilities(cross_param_dict):
 def print_hyper_param_dicts(n_shared_cross, cross_param_dict, hyper_param_dicts, alg_template):
     for hpd in hyper_param_dicts:
         print problem_template.fill_name(hpd), alg_template.fill_name(hpd)
-        for k, v in hpd.items():
-            print '%s: %s' % (k, v)
-        print
+        if 'train_batch_size' not in hpd:
+            for k, v in hpd.items():
+                print '%s: %s' % (k, v)
+            print
 
     n_total_cross = count_cross_possibilities(cross_param_dict)
     print '======================================================'
