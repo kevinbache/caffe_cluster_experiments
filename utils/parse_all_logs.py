@@ -7,10 +7,10 @@ import sys
 # append this path for extract_seconds
 this_path = os.path.dirname(os.path.realpath(__file__))
 sys.path += [this_path]
-
 import parse_log
 
-default_root = os.path.join(this_path, 'output', 'runs')
+basepath = os.path.basename(this_path)
+default_root = os.path.join(basepath, 'output', 'runs')
 
 def find_files_recursive(root_path, pattern):
     """
@@ -39,6 +39,7 @@ def parse_my_args():
                         help='Path to recursively search for error.log files to parse.')
 
     parser.add_argument('--pattern',
+
                         default = 'error.log',
                         help='Pattern to search for')
 

@@ -38,12 +38,11 @@ algorithm_template = NamedTemplate(algorithm_name_template_str, algorithm_yaml_t
 # params #
 ##########
 cross_params = {
-    'train_batch_size': [50, 80, 125, 250],
+    # 'train_batch_size': [50, 80, 125, 250],
     'log_low_alpha': [-6],
     'log_high_alpha': [6],
     'n_alphas': [99],
     'delta': [1e-8],
-    'seed': np.arange(3),
 }
 priority = 10
 hyper_params = append_dicts(hyper_params, cross_dict(cross_params))

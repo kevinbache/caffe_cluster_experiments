@@ -10,6 +10,7 @@ test_compute_loss: true
 
 display: ${n_iters_before_display}
 max_iter: ${n_max_iters}
+max_seconds: ${max_seconds}
 snapshot: ${n_iters_before_snapshot}
 snapshot_prefix: "${tmp_output_path}/snapshot"
 solver_mode: GPU

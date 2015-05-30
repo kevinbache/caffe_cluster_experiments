@@ -129,8 +129,9 @@ def parse_log(path_to_log):
                                         'TrainingLoss': train_loss,
                                         'LearningRate': learning_rate,
                                         'AvgGradientNorm': avg_grad_norm,
-                                        'AvgStepNorm': avg_step_norm,
-                                        'EffectiveLearningRate': eff_lr})
+                                        'AvgStepNorm': avg_step_norm})
+                                        # 'AvgStepNorm': avg_step_norm,
+                                        # 'EffectiveLearningRate': eff_lr})
 
             output_loss_match = re_output_loss.search(line)
             if output_loss_match and get_line_type(line) == 'test':
@@ -207,8 +208,8 @@ def create_dataframe(train_dict_list, test_dict_list, batch_size):
     df['grad_norm'] = gb_extra['AvgGradientNorm'].mean()
     df['step_norm_last'] = gb_extra['AvgStepNorm'].last()
     df['step_norm'] = gb_extra['AvgStepNorm'].mean()
-    df['effective_lr_last'] = gb_extra['EffectiveLearningRate'].last()
-    df['effective_lr'] = gb_extra['EffectiveLearningRate'].mean()
+    # df['effective_lr_last'] = gb_extra['EffectiveLearningRate'].last()
+    # df['effective_lr'] = gb_extra['EffectiveLearningRate'].mean()
     df['training_displays_count'] = gb_extra['LearningRate'].count()
 
     return df

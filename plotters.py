@@ -994,3 +994,28 @@ if __name__ == '__main__':
     #                        ylims=ylims,
     #                        use_xmax=xmax,
     #                        fig_inches=(18, 12))
+
+
+    exp_file = os.path.join(this_path,
+                            'output/experiments/vs4-lc----2015.05.30.txt')
+    ylims = [[.19, .35], [1e-2, 1e1], None, None]
+    xmax = 20000
+    vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
+    p = TimeSeriesPlotter()
+    p.plot_from_experiment(exp_file,
+                           vars_to_plot=vars_to_plot,
+                           ylims=ylims,
+                           use_xmax=xmax,
+                           fig_inches=(18, 12))
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/vs4-agl----2015.05.30.txt')
+    # ylims = [[.19, .35], [1e-2, 1e1], None, None]
+    # xmax = 30000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
