@@ -60,8 +60,7 @@ hyper_params = {
     'n_epochs_before_each_snapshot': 10,
     'n_epochs': 1000,
 
-    'train_batch_size': [50, 80, 125, 250],
-    'test_batch_size': [250],
+    'test_batch_size': 250,
 
     'weight_decay': .0005,
 
