@@ -66,7 +66,7 @@ elif hostname == 'master':
 else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
-experiment_base_name = 'CifarV5'
+experiment_base_name = 'CifarVs5'
 
 DRY_RUN = False
 
