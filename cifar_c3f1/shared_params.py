@@ -70,7 +70,9 @@ elif hostname == 'master':
 else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
-experiment_base_name = 'LineVs5'
+experiment_base_name = 'CifarV5'
+
+DRY_RUN = True
 
 hyper_params = {
     # params ends up in run name
@@ -89,14 +91,15 @@ hyper_params = {
 
     'shared_cross_params': {
         'weight_filler': ['      type: "gaussian"\n      std: 0.0001\n',
-                          '      type: "gaussian"\n      std: 0.01\n',
+                          # '      type: "gaussian"\n      std: 0.01\n',
                           '      type: "xavier"\n'],
         'train_batch_size': [50, 80, 125, 250],
+        'seed': range(3),
     },
 
-    # will override n_epochs
-    'n_max_iters': 1000000,
-    'max_seconds': 30,
+
+    'n_max_iters': 1000000,  # will override n_epochs
+    'max_seconds': 5 * 3600, # will override n_max_iters
 }
 
 def param_extender(hyper_param_dict):

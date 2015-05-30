@@ -55,16 +55,15 @@ hyper_param_dicts = append_dicts(hyper_params, cross_dict(all_cross_params))
 # extend corssed params with extra values (e.g. 'weight_filler_name')
 hyper_param_dicts = [param_extender(hpd) for hpd in hyper_param_dicts]
 
-DRY_RUN = True
+
+##################
+# run experiment #
+##################
 if DRY_RUN:
     print_hyper_param_dicts(n_shared_cross, all_cross_params, hyper_param_dicts, algorithm_template)
     print 'Exiting'
     exit()
 
-
-##################
-# run experiment #
-##################
 e = Experiment(use_sge=True, DEBUG_MODE=False)
 e.run(experiment_base_name, problem_template, algorithm_template, hyper_params,
       offer_compatible_runs=False, priority=priority)
