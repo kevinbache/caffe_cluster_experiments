@@ -97,7 +97,7 @@ hyper_params = {
     },
 
     # 'cifar_data': '/data/cifar10/caffe',
-    'cifar_data': '/storage/code/caffe/data/cifar10',
+    'cifar_data': '/storage/code/caffe/examples/cifar10',
 
     'n_max_iters': 1000000,  # will override n_epochs
     'max_seconds': 4 * 3600, # will override n_max_iters
