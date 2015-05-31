@@ -72,7 +72,7 @@ else:
 
 experiment_base_name = 'CifarVs5'
 
-DRY_RUN = True
+DRY_RUN = False
 
 hyper_params = {
     # params ends up in run name
@@ -92,14 +92,14 @@ hyper_params = {
     # 'weight_filler': 'type: "xavier"\n',
 
     'shared_cross_params': {
-        'weight_filler': ['type: "gaussian"\n      std: 0.01',
+        'weight_filler': ['type: "gaussian"\n      std: 0.001',
                           'type: "xavier"'],
         'train_batch_size': [50, 80, 125, 250],
         'seed': range(1),
     },
 
-    # 'cifar_data': '/data/cifar10/caffe',
-    'cifar_data': '/storage/code/caffe/examples/cifar10',
+    'cifar_data': '/data/cifar10/caffe',
+    # 'cifar_data': '/storage/code/caffe/examples/cifar10',
 
     'n_max_iters': 100000,  # will override n_epochs
     'max_seconds': 4 * 3600, # will override n_max_iters
