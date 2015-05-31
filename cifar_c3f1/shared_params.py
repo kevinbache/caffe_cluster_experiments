@@ -88,10 +88,12 @@ hyper_params = {
     'test_batch_size': 250,
 
     'weight_decay': .0005,
+    # 'weight_filler': 'type: "gaussian"\n      std: 0.01',
+    'weight_filler': 'type: "xavier"\n',
 
     'shared_cross_params': {
-        'weight_filler': ['      type: "gaussian"\n      std: 0.001\n',
-                          '      type: "xavier"\n'],
+        # 'weight_filler': ['type: "gaussian"\n      std: 0.01',
+        #                   'type: "xavier"'],
         'train_batch_size': [50, 80, 125, 250],
         'seed': range(2),
     },
@@ -100,14 +102,13 @@ hyper_params = {
     'cifar_data': '/storage/code/caffe/examples/cifar10',
 
     'n_max_iters': 100000,  # will override n_epochs
-    # 'max_seconds': 4 * 3600, # will override n_max_iters
+    'max_seconds': 4 * 3600, # will override n_max_iters
 }
 
 def param_extender(hyper_param_dict):
     # fill this function with whatever you'd like.
     # it's a general mechanism for changing hyper parameter sets after the cross params have had
     # their cross products taken
-
     wf = hyper_param_dict['weight_filler']
     if 'gauss' in wf:
         m = re.search(r'std: ([\.\d\-+e]+)', wf)
@@ -117,8 +118,8 @@ def param_extender(hyper_param_dict):
         name = 'xavier'
     else:
         raise ValueError('Unknown weight filler')
-    hyper_param_dict['weight_fill_name'] = name
 
+    hyper_param_dict['weight_fill_name'] = name
     return hyper_param_dict
 
 
