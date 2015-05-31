@@ -72,7 +72,7 @@ else:
 
 experiment_base_name = 'CifarVs5'
 
-DRY_RUN = False
+DRY_RUN = True
 
 hyper_params = {
     # params ends up in run name
@@ -89,13 +89,13 @@ hyper_params = {
 
     'weight_decay': .0005,
     # 'weight_filler': 'type: "gaussian"\n      std: 0.01',
-    'weight_filler': 'type: "xavier"\n',
+    # 'weight_filler': 'type: "xavier"\n',
 
     'shared_cross_params': {
-        # 'weight_filler': ['type: "gaussian"\n      std: 0.01',
-        #                   'type: "xavier"'],
+        'weight_filler': ['type: "gaussian"\n      std: 0.01',
+                          'type: "xavier"'],
         'train_batch_size': [50, 80, 125, 250],
-        'seed': range(2),
+        'seed': range(1),
     },
 
     # 'cifar_data': '/data/cifar10/caffe',
