@@ -72,7 +72,7 @@ else:
 
 experiment_base_name = 'ImagenetVs6'
 
-DRY_RUN = True
+DRY_RUN = False
 
 hyper_params = {
     # params ends up in run name
