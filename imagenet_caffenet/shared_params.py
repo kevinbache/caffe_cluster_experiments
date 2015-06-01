@@ -31,7 +31,7 @@ problem_file = os.path.join(this_path, 'problem_template.prototxt')
 with open(problem_file, 'r') as f:
     problem_yaml_template_str = f.read()
 
-problem_name_template_str = "ImagenetCaffeNet(wd=${weight_decay}_wf=${weight_fill_name})-" \
+problem_name_template_str = "ImagenetCaffeNet(wd=${weight_decay}_wf=${weight_filler_conv})-" \
                             "tag(${tag})"
 problem_template = NamedTemplate(problem_name_template_str, problem_yaml_template_str)
 
