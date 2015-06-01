@@ -113,7 +113,13 @@ def param_extender(hyper_param_dict):
     # fill this function with whatever you'd like.
     # it's a general mechanism for changing hyper parameter sets after the cross params have had
     # their cross products taken
-    wf = hyper_param_dict['weight_filler']
+    if 'weight_filler' in hyper_param_dict:
+        wf = hyper_param_dict['weight_filler']
+    elif 'weight_filler_conv' in hyper_param_dict:
+        wf = hyper_param_dict['weight_filler_conv']
+    else:
+        raise ValueError('Expecting to find either "weight_filler" or "weight_filler_conv" in'
+                         'hyper_param_dict')
     if 'gauss' in wf:
         m = re.search(r'std: ([\.\d\-+e]+)', wf)
         std = float(m.group(1))
