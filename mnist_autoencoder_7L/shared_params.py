@@ -27,7 +27,7 @@ from experiment import NamedTemplate
 ######################
 # load problem yamls #
 ######################
-problem_file = os.path.join(this_path, 'problem_template.prototxt')
+problem_file = os.path.join(base_dir, 'problem_template.prototxt')
 with open(problem_file, 'r') as f:
     problem_yaml_template_str = f.read()
 
@@ -94,7 +94,7 @@ hyper_params = {
 
     'shared_cross_params': {
         'weight_filler': ['type: "gaussian"\n      std: 1\n      sparse: 15',
-                          'type: "xavier"']
+                          'type: "xavier"'],
         'train_batch_size': [50, 80, 125, 250],
         'seed': range(1),
     },
