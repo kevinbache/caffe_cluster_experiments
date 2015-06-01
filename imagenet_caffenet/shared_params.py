@@ -70,7 +70,7 @@ elif hostname == 'master':
 else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
-experiment_base_name = 'ImagenetVs6'
+experiment_base_name = 'ImagenetVs10'
 
 DRY_RUN = False
 
@@ -95,8 +95,6 @@ hyper_params = {
     'weight_filler_ip2': 'type: "gaussian"\n      std: 0.01',
 
     'shared_cross_params': {
-        # 'weight_filler': ['type: "gaussian"\n      std: 0.001',
-        #                   'type: "xavier"'],
         'train_batch_size': [64, 32, 128, 256],
         'seed': range(1),
     },
