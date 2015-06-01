@@ -100,8 +100,8 @@ hyper_params = {
 
     'data_dir': '/data',
 
-    'n_max_iters': 300000,  # will override n_epochs
-    'max_seconds': 3 * 3600, # will override n_max_iters
+    'n_max_iters': 1000000,  # will override n_epochs
+    'max_seconds': 1 * 3600, # will override n_max_iters
 }
 
 def param_extender(hyper_param_dict):
