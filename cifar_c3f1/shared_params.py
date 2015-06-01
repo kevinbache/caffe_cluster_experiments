@@ -17,7 +17,6 @@ def parent(dirname, n_levels):
     return dirname
 
 this_path = os.path.dirname(os.path.realpath(__file__))
-print 'thispath:', this_path
 base_dir = parent(this_path, 1)
 sys.path.append(base_dir)
 
