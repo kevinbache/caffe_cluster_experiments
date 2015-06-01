@@ -1,0 +1,107 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{nips15submit_e,times}
+\usepackage{hyperref}
+\usepackage{url}
+
+\usepackage[
+    backend=biber,
+    style=authoryear,
+    natbib=true,
+    citestyle=authoryear 
+]{biblatex}
+
+\addbibresource{refs.bib}
+
+\title{An Empirical Evaluation of Adaptive Stochastic Gradient Methods for Machine Learning}
+
+\author{
+Kevin M. Bache \\
+Department of Computer Science\\
+University of California, Irvine\\
+Irvine, CA 92663 \\
+\texttt{kbache@ics.uci.edu} \\
+\And
+Padhraic Smyth \\
+Department of Computer Science\\
+University of California, Irvine\\
+Irvine, CA 92663 \\
+\texttt{smyth@ics.uci.edu} \\
+}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+%\nipsfinalcopy % Uncomment for camera-ready version
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Abstract goes here.
+\end{abstract}
+
+\section{Introduction}
+Empirical risk minimization lies at the heart of most problems in machine learning.  Given a dataset $X = \{x_1, ..., x_i, ..., x_N\}$, the task is often posed as finding a vector of parameters, $\theta$, to minimize an aggregated loss function defined over the entire dataset: $\arg\min_{\theta} \sum_{i=1}^N f(x_i; \theta)$.  Gradient-based methods are the choice-apparent for many such problems, and where the dataset is large and redundant, stochastic gradient methods reign supreme. 
+
+Standard stochastic gradient methods introduce a number of hyperparamters, most notably learning rate, which must be carefully tuned for optimal performance, a process that is tedious and computationally expensive.  As a result, recent years have seen the introduction of a host of adaptive learning rate methods, \citep{schaul_no_2012, zeiler_adadelta:_2012, kingma2014adam, bache2014hot}.  However, despite their recent successes, there is little work comparing the performance of various adaptive learning rate methods in practice.  
+
+In this paper, we present an empirical evaluation of the performance of several common stochastic optimization methods as well as state-of-the-art adaptive methods.  In addition, we consider a stochastic variant of backtracking line search and find it to be competitive in many cases with more complex adaptive learning rate methods.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Stochastic Gradient Methods}
+\subsection{Hyperparameter-Sensitive Methods}
+\subsubsection{Stochastic Gradient}
+\citep{robbins_stochastic_1951}
+
+\subsubsection{AdaGrad}
+blah blah \citep{duchi2011adaptive}.
+
+\subsubsection{Hyperparameter Search}
+
+\subsection{Hyperparameter Insensitive Methods}
+\subsection{AdaDelta}
+blah blah \citep{zeiler_adadelta:_2012}.
+
+\subsection{Adam}
+\cite{kingma2014adam}
+
+\subsection{Stochastic Line Search} 
+Uses line search a little: 
+\citep{ngiam2011optimization}.
+\citep{mahsereci2015probabilistic}
+\citep{bache2014hot}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Experiments}
+\subsection{Logistic Regression}
+
+\subsection{Feed Forward Neural Nets}
+
+\subsection{Convolutional Neural Nets}
+
+\subsection{Dropout}
+
+\subsection{Timing}
+
+
+\subsection{Deep Neural Nets}
+
+\subsection{Polyak Averaging}
+\citep{polyak_methods_1964}
+
+
+\subsubsection*{Acknowledgments}
+
+Withheld from the anonymized version.
+
+\printbibliography 
+
+
+% References follow the acknowledgments. Use unnumbered third level heading for
+% the references. Any choice of citation style is acceptable as long as you are
+% consistent. It is permissible to reduce the font size to `small' (9-point) 
+% when listing the references. {\bf Remember that this year you can use
+% a ninth page as long as it contains \emph{only} cited references.}
+
+
+\end{document}

@@ -111,6 +111,7 @@ class Plotter(object):
         'train_y_nll': ('Training Objective', True),
 
         'learning_rate': ('Learning Rate', True),
+        'effective_lr': ('Effective Learning Rate', True),
         'grad_norm': ('Gradient Norm', True),
         'grad_norm_current': ('Gradient Norm\n(Most Recent)', True),
 
@@ -588,6 +589,13 @@ class TimeSeriesPlotter(Plotter):
             cm = pylab.get_cmap('BuGn')
             print 'adadelta: ', an
             return cm(cmap_index), style, line_width, alpha, 5, 'AdaDelta, batch =% 5d' % batch_size
+        elif 'sgd' in an:
+            MIN_CMAP = .7
+            MAX_CMAP = 1.3
+            cmap_index = cmap_index * (MAX_CMAP - MIN_CMAP) + MIN_CMAP
+            cm = pylab.get_cmap('Blues')
+            print 'sgd: ', an
+            return cm(cmap_index), style, line_width, alpha, 1, 'SGD, batch =% 5d' % batch_size
         elif 'agl' in an:
             # step 2: remap values to the range i want for this map
             MIN_CMAP = .33
@@ -606,13 +614,6 @@ class TimeSeriesPlotter(Plotter):
             cm = pylab.get_cmap('BuPu')
             print 'ag: ', an
             return cm(cmap_index), style, line_width, alpha, 1, 'AdaGrad, batch =% 5d' % batch_size
-        elif 'sgd' in an:
-            MIN_CMAP = .7
-            MAX_CMAP = 1.3
-            cmap_index = cmap_index * (MAX_CMAP - MIN_CMAP) + MIN_CMAP
-            cm = pylab.get_cmap('Blues')
-            print 'sgd: ', an
-            return cm(cmap_index), style, line_width, alpha, 1, 'SGD, batch =% 5d' % batch_size
         else:
             raise ValueError("Algoritm name must contain one of 'ducb', 'adadelta', or 'sgd'.  " +
                              "You gave: %s" % algorithm_name)
@@ -777,7 +778,7 @@ class TimeSeriesPlotter(Plotter):
                     print 'Saving:', save_file
                     fig.savefig(save_file, bbox_inches='tight', dpi=300)
         print 'TimeSeriesPlotter: Plots are up'
-        pylab.show()
+        # pylab.show()
 
 
 if __name__ == '__main__':
@@ -996,17 +997,17 @@ if __name__ == '__main__':
     #                        fig_inches=(18, 12))
 
 
-    exp_file = os.path.join(this_path,
-                            'output/experiments/vs4-lc----2015.05.30.txt')
-    ylims = [[.19, .35], [1e-2, 1e1], None, None]
-    xmax = 20000
-    vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
-    p = TimeSeriesPlotter()
-    p.plot_from_experiment(exp_file,
-                           vars_to_plot=vars_to_plot,
-                           ylims=ylims,
-                           use_xmax=xmax,
-                           fig_inches=(18, 12))
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/vs4-lc----2015.05.30.txt')
+    # ylims = [[.19, .35], [1e-2, 1e1], None, None]
+    # xmax = 20000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
 
     # exp_file = os.path.join(this_path,
     #                         'output/experiments/vs4-agl----2015.05.30.txt')
@@ -1019,3 +1020,32 @@ if __name__ == '__main__':
     #                        ylims=ylims,
     #                        use_xmax=xmax,
     #                        fig_inches=(18, 12))
+
+    type_codes = ['ad', 'adl', 'adam', 'ag', 'agl', 'sgd', 'lc']
+    for tc in type_codes:
+        print 'starting plot for', tc
+        exp_file = os.path.join(this_path,
+                                'output/experiments/vs5-%s----2015.05.31.txt' % tc)
+        ylims = [[.19, .35], [1e-2, 1e1], None, None]
+        xmax = 10000
+        vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'effective_lr', 'grad_norm']),)
+        p = TimeSeriesPlotter()
+        p.plot_from_experiment(exp_file,
+                               vars_to_plot=vars_to_plot,
+                               ylims=ylims,
+                               use_xmax=xmax,
+                               fig_inches=(18, 12))
+
+
+    # exp_file = os.path.join(this_path,
+    #                         'output/experiments/vs4-agl----2015.05.30.txt')
+    # ylims = [[.19, .35], [1e-2, 1e1], None, None]
+    # xmax = 30000
+    # vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'learning_rate', 'grad_norm']),)
+    # p = TimeSeriesPlotter()
+    # p.plot_from_experiment(exp_file,
+    #                        vars_to_plot=vars_to_plot,
+    #                        ylims=ylims,
+    #                        use_xmax=xmax,
+    #                        fig_inches=(18, 12))
+

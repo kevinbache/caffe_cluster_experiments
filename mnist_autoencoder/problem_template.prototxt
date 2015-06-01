@@ -10,7 +10,7 @@ layer {
     scale: 0.0039215684
   }
   data_param {
-    source: "${caffe_root}/examples/mnist/mnist_train_lmdb"
+    source: "${data_dir}/mnist/mnist_train_lmdb"
     batch_size: ${train_batch_size}
     backend: LMDB
   }
@@ -27,7 +27,7 @@ layer {
     scale: 0.0039215684
   }
   data_param {
-    source: "${caffe_root}/examples/mnist/mnist_train_lmdb"
+    source: "${data_dir}/mnist/mnist_train_lmdb"
     batch_size: ${train_batch_size}
     backend: LMDB
   }
@@ -44,7 +44,7 @@ layer {
     scale: 0.0039215684
   }
   data_param {
-    source: "${caffe_root}/examples/mnist/mnist_test_lmdb"
+    source: "${data_dir}/mnist/mnist_test_lmdb"
     batch_size: ${test_batch_size}
     backend: LMDB
   }
@@ -71,9 +71,10 @@ layer {
   inner_product_param {
     num_output: 1000
     weight_filler {
-      type: "gaussian"
-      std: 1
-      sparse: 15
+#      type: "gaussian"
+#      std: 1
+#      sparse: 15
+      ${weight_filler}
     }
     bias_filler {
       type: "constant"
@@ -103,9 +104,10 @@ layer {
   inner_product_param {
     num_output: 500
     weight_filler {
-      type: "gaussian"
-      std: 1
-      sparse: 15
+#      type: "gaussian"
+#      std: 1
+#      sparse: 15
+      ${weight_filler}
     }
     bias_filler {
       type: "constant"
@@ -135,9 +137,10 @@ layer {
   inner_product_param {
     num_output: 250
     weight_filler {
-      type: "gaussian"
-      std: 1
-      sparse: 15
+#      type: "gaussian"
+#      std: 1
+#      sparse: 15
+      ${weight_filler}
     }
     bias_filler {
       type: "constant"
@@ -167,9 +170,10 @@ layer {
   inner_product_param {
     num_output: 30
     weight_filler {
-      type: "gaussian"
-      std: 1
-      sparse: 15
+#      type: "gaussian"
+#      std: 1
+#      sparse: 15
+      ${weight_filler}
     }
     bias_filler {
       type: "constant"
@@ -193,9 +197,10 @@ layer {
   inner_product_param {
     num_output: 250
     weight_filler {
-      type: "gaussian"
-      std: 1
-      sparse: 15
+#      type: "gaussian"
+#      std: 1
+#      sparse: 15
+      ${weight_filler}
     }
     bias_filler {
       type: "constant"
@@ -225,9 +230,10 @@ layer {
   inner_product_param {
     num_output: 500
     weight_filler {
-      type: "gaussian"
-      std: 1
-      sparse: 15
+#      type: "gaussian"
+#      std: 1
+#      sparse: 15
+      ${weight_filler}
     }
     bias_filler {
       type: "constant"
@@ -257,9 +263,10 @@ layer {
   inner_product_param {
     num_output: 1000
     weight_filler {
-      type: "gaussian"
-      std: 1
-      sparse: 15
+#      type: "gaussian"
+#      std: 1
+#      sparse: 15
+      ${weight_filler}
     }
     bias_filler {
       type: "constant"
@@ -289,9 +296,10 @@ layer {
   inner_product_param {
     num_output: 784
     weight_filler {
-      type: "gaussian"
-      std: 1
-      sparse: 15
+#      type: "gaussian"
+#      std: 1
+#      sparse: 15
+      ${weight_filler}
     }
     bias_filler {
       type: "constant"

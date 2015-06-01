@@ -49,14 +49,14 @@ def parse_log(path_to_log):
 
     re_batch_size = re.compile('batch_size: (\d+)')
     re_iteration = re.compile('Iteration (\d+)')
-    re_accuracy = re.compile('output #\d+: accuracy = ([\.\d\-+e]+)')
-    re_ce = re.compile('output #\d+: cross_entropy_loss = ([\.\d\-+e]+)')
-    re_train_loss = re.compile('Iteration \d+, loss = ([\.\d\-+e]+)')
-    re_output_loss = re.compile('output #\d+: loss = ([\.\d\-+e]+)')
-    re_lr = re.compile('lr = ([\.\d\-+e]+)')
-    re_grad_norm = re.compile('avg_grad_norm = ([\.\d\-+e]+)')
-    re_step_norm = re.compile('avg_step_norm = ([\.\d\-+e]+)')
-    re_eff_lr = re.compile('avg_effective_learning_rate = ([\.\d\-+e]+)')
+    re_accuracy = re.compile('output #\d+: accuracy = ([\.\d\-+ena]+)')
+    re_ce = re.compile('output #\d+: cross_entropy_loss = ([\.\d\-+ena]+)')
+    re_train_loss = re.compile('Iteration \d+, loss = ([\.\d\-+ena]+)')
+    re_output_loss = re.compile('output #\d+: loss = ([\.\d\-+ena]+)')
+    re_lr = re.compile('lr = ([\.\d\-+ena]+)')
+    re_grad_norm = re.compile('avg_grad_norm = ([\.\d\-+enan]+)')
+    re_step_norm = re.compile('avg_step_norm = ([\.\d\-+enan]+)')
+    re_eff_lr = re.compile('avg_effective_learning_rate = ([\.\d\-+enan]+)')
     re_test_start_seconds = re.compile('Testing net')
 
     # Pick out lines of interest
@@ -66,6 +66,7 @@ def parse_log(path_to_log):
     learning_rate = float('NaN')
     avg_grad_norm = float('NaN')
     avg_step_norm = float('NaN')
+    eff_lr = float('NaN')
     batch_size = None
     train_dict_list = []
     test_dict_list = []
@@ -129,9 +130,9 @@ def parse_log(path_to_log):
                                         'TrainingLoss': train_loss,
                                         'LearningRate': learning_rate,
                                         'AvgGradientNorm': avg_grad_norm,
-                                        'AvgStepNorm': avg_step_norm})
-                                        # 'AvgStepNorm': avg_step_norm,
-                                        # 'EffectiveLearningRate': eff_lr})
+                                        # 'AvgStepNorm': avg_step_norm})
+                                        'AvgStepNorm': avg_step_norm,
+                                        'EffectiveLearningRate': eff_lr})
 
             output_loss_match = re_output_loss.search(line)
             if output_loss_match and get_line_type(line) == 'test':
@@ -150,8 +151,7 @@ def parse_log(path_to_log):
 
 
 def parse_args():
-    description = ('Parse a Caffe training log into two CSV files '
-                   'containing training and testing information')
+    description = ('Parse a Caffe training log into a dataframe')
     parser = argparse.ArgumentParser(description=description)
 
     parser.add_argument('logfile_path',
@@ -208,8 +208,8 @@ def create_dataframe(train_dict_list, test_dict_list, batch_size):
     df['grad_norm'] = gb_extra['AvgGradientNorm'].mean()
     df['step_norm_last'] = gb_extra['AvgStepNorm'].last()
     df['step_norm'] = gb_extra['AvgStepNorm'].mean()
-    # df['effective_lr_last'] = gb_extra['EffectiveLearningRate'].last()
-    # df['effective_lr'] = gb_extra['EffectiveLearningRate'].mean()
+    df['effective_lr_last'] = gb_extra['EffectiveLearningRate'].last()
+    df['effective_lr'] = gb_extra['EffectiveLearningRate'].mean()
     df['training_displays_count'] = gb_extra['LearningRate'].count()
 
     return df
@@ -225,20 +225,23 @@ def save_df(out_file, df):
 
 
 def main(logfile_path, verbose):
+    if verbose:
+        print 'starting to parse', logfile_path
     train_dict_list, test_dict_list, batch_size = parse_log(logfile_path)
     if len(train_dict_list) > 0:
         df = create_dataframe(train_dict_list, test_dict_list, batch_size)
 
-        if verbose:
-            print df
+        # if verbose:
+        #     print df
 
         out_dir = os.path.dirname(logfile_path)
         out_file = os.path.join(out_dir, 'parsed_log_df.pkl')
+
+        if verbose:
+            print 'saving', out_file
+
         save_df(out_file, df)
 
 if __name__ == '__main__':
     args = parse_args()
     main(args.logfile_path, args.verbose)
-
-
-
