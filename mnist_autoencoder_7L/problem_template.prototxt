@@ -313,7 +313,7 @@ layer {
   bottom: "decode1"
   bottom: "flatdata"
   top: "cross_entropy_loss"
-  loss_weight: 0
+  loss_weight: 1
 }
 layer {
   name: "decode1neuron"
@@ -327,5 +327,5 @@ layer {
   bottom: "decode1neuron"
   bottom: "flatdata"
   top: "l2_error"
-  loss_weight: 1
+  loss_weight: 0
 }

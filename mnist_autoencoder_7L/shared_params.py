@@ -70,7 +70,7 @@ elif hostname == 'master':
 else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
-experiment_base_name = 'MnistVs20'
+experiment_base_name = 'MnistVs20CE'
 
 DRY_RUN = False
 
