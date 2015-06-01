@@ -70,7 +70,7 @@ elif hostname == 'master':
 else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
-experiment_base_name = 'MnistVs20CE'
+experiment_base_name = 'MnistVs21CE'
 
 DRY_RUN = False
 
@@ -89,8 +89,7 @@ hyper_params = {
 
     'weight_decay': .0005,
     # 'weight_filler': 'type: "gaussian"\n      std: 0.01',
-    # 'weight_filler': 'type: "xavier"\n',
-
+    # 'weight_filler': 'type: "xavier"',
 
     'shared_cross_params': {
         'weight_filler': ['type: "gaussian"\n      std: 1\n      sparse: 15',
@@ -101,8 +100,8 @@ hyper_params = {
 
     'data_dir': '/data',
 
-    'n_max_iters': 100000,  # will override n_epochs
-    'max_seconds': 2 * 3600, # will override n_max_iters
+    'n_max_iters': 300000,  # will override n_epochs
+    'max_seconds': 3 * 3600, # will override n_max_iters
 }
 
 def param_extender(hyper_param_dict):

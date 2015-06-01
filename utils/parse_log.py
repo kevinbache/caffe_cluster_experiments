@@ -49,10 +49,11 @@ def parse_log(path_to_log):
 
     re_batch_size = re.compile('batch_size: (\d+)')
     re_iteration = re.compile('Iteration (\d+)')
-    re_accuracy = re.compile('output #\d+: accuracy = ([\.\d\-+ena]+)')
-    re_ce = re.compile('output #\d+: cross_entropy_loss = ([\.\d\-+ena]+)')
     re_train_loss = re.compile('Iteration \d+, loss = ([\.\d\-+ena]+)')
-    re_output_loss = re.compile('output #\d+: loss = ([\.\d\-+ena]+)')
+
+    re_accuracy = re.compile('output #\d+: (accuracy|l2_error) = ([\.\d\-+ena]+)')
+    re_output_loss = re.compile('output #\d+: (loss|cross_entropy_loss) = ([\.\d\-+ena]+)')
+
     re_lr = re.compile('lr = ([\.\d\-+ena]+)')
     re_grad_norm = re.compile('avg_grad_norm = ([\.\d\-+enan]+)')
     re_step_norm = re.compile('avg_step_norm = ([\.\d\-+enan]+)')
@@ -116,11 +117,11 @@ def parse_log(path_to_log):
 
             accuracy_match = re_accuracy.search(line)
             if accuracy_match and get_line_type(line) == 'test':
-                test_accuracy = float(accuracy_match.group(1))
+                test_accuracy = float(accuracy_match.group(2))
 
-            ce_match = re_ce.search(line)
-            if ce_match and get_line_type(line) == 'test':
-                test_accuracy = float(ce_match.group(1))
+            # ce_match = re_ce.search(line)
+            # if ce_match and get_line_type(line) == 'test':
+            #     test_accuracy = float(ce_match.group(1))
 
             train_loss_match = re_train_loss.search(line)
             if train_loss_match:
@@ -136,7 +137,7 @@ def parse_log(path_to_log):
 
             output_loss_match = re_output_loss.search(line)
             if output_loss_match and get_line_type(line) == 'test':
-                test_loss = float(output_loss_match.group(1))
+                test_loss = float(output_loss_match.group(2))
                 # NOTE: we assume that (1) accuracy always comes right before
                 # loss for test data so the test_accuracy variable is already
                 # correctly populated and (2) there's one and only one output
