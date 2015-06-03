@@ -71,7 +71,7 @@ layer {
 #      type: "gaussian"
 #      std: .01
 #      sparse: ${n_neurons_h0_sparse_init}
-      ${weight_filler}
+      ${weight_filler0}
     }
     bias_filler {
       type: "constant"
@@ -103,8 +103,8 @@ layer {
     weight_filler {
 #      type: "gaussian"
 #      std: .01
-#      sparse: ${n_neurons_h0_sparse_init}
-      ${weight_filler}
+#      sparse: ${n_neurons_h1_sparse_init}
+      ${weight_filler1}
     }
     bias_filler {
       type: "constant"
@@ -134,9 +134,10 @@ layer {
   inner_product_param {
     num_output: 10
     weight_filler {
-      type: "gaussian"
-      std: .01
-      sparse: ${n_neurons_y_sparse_init}
+#      type: "gaussian"
+#      std: .01
+#      sparse: ${n_neurons_y_sparse_init}
+      ${weight_fillery}
     }
     bias_filler {
       type: "constant"

@@ -31,7 +31,11 @@ problem_file = os.path.join(this_path, 'problem_template.prototxt')
 with open(problem_file, 'r') as f:
     problem_yaml_template_str = f.read()
 
-problem_name_template_str = "CifarAlexCaffe(wd=${weight_decay}_wf=${weight_fill_name})-" \
+# problem_name_template_str = "MNIST-FF(${n_neurons_h0}-${n_neurons_h1})-" \
+#                             "tag(${tag})"
+
+problem_name_template_str = "MNIST-FF(${n_neurons_h0}-${n_neurons_h1}_wd=${weight_decay}_" \
+                            "wf=${weight_fill_name})-" \
                             "tag(${tag})"
 problem_template = NamedTemplate(problem_name_template_str, problem_yaml_template_str)
 
@@ -70,9 +74,12 @@ elif hostname == 'master':
 else:
     raise ValueError('unknown hostname: %s.  Not sure whether to use Sun Grid Engine.' % hostname)
 
-experiment_base_name = 'CifarVs5'
+experiment_base_name = 'Mnist500-300_Vs30'
 
 DRY_RUN = False
+
+n_neurons_h0 = 500
+n_neurons_h1 = 300
 
 hyper_params = {
     # params ends up in run name
@@ -80,29 +87,33 @@ hyper_params = {
     'params': location,
     'tag': experiment_base_name,
 
-    'n_data_train': 50000,
+    'n_data_train': 60000,
     'n_data_test': 10000,
-    'n_epochs_before_each_snapshot': 10,
+    'n_epochs_before_each_snapshot': 20,
     'n_epochs': 1000,
+
+    'n_neurons_h0': n_neurons_h0,
+    'n_neurons_h1': n_neurons_h1,
 
     'test_batch_size': 250,
 
     'weight_decay': .0005,
-    # 'weight_filler': 'type: "gaussian"\n      std: 0.01',
-    # 'weight_filler': 'type: "xavier"\n',
+
+     'weight_filler0': 'type: "gaussian"\n      std: .01\n      sparse: %d' % int(n_neurons_h0 / 10),
+     'weight_filler1': 'type: "gaussian"\n      std: .01\n      sparse: %d' % int(n_neurons_h1 / 10),
+     'weight_fillery': 'type: "gaussian"\n      std: .01\n      sparse: %d' % int(0 / 10),
 
     'shared_cross_params': {
-        'weight_filler': ['type: "gaussian"\n      std: 0.001',
-                          'type: "xavier"'],
+        # 'weight_filler': ['type: "gaussian"\n      std: 0.001',
+        #                   'type: "xavier"'],
         'train_batch_size': [50, 80, 125, 250],
         'seed': range(1),
     },
 
-    'cifar_data': '/data/cifar10/caffe',
-    # 'cifar_data': '/storage/code/caffe/examples/cifar10',
+    'data_dir': '/data',
 
     'n_max_iters': 1000000,  # will override n_epochs
-    'max_seconds': 4 * 3600, # will override n_max_iters
+    'max_seconds': 1 * 3600, # will override n_max_iters
 }
 
 def param_extender(hyper_param_dict):
