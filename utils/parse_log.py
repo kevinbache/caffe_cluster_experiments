@@ -78,6 +78,7 @@ def parse_log(path_to_log):
 
     with open(path_to_log) as f:
         for line in f:
+            # print 'parse_log.py line: ', line
             if batch_size is None:
                 batch_size_match = re_batch_size.search(line)
                 if batch_size_match:

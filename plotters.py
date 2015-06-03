@@ -782,29 +782,58 @@ class TimeSeriesPlotter(Plotter):
 
 
 if __name__ == '__main__':
-    # # CIFAR Vs5
-    # type_codes = ['ad', 'adl', 'adam', 'adaml', 'ag', 'agl', 'sgd', 'lc']
-    # for tc in type_codes:
-    #     print 'starting plot for', tc
-    #     exp_file = os.path.join(this_path,
-    #                             'output/experiments/vs5-%s----2015.06.01.txt' % tc)
-    #     ylims = [[.19, .35], [1e-2, 1e1], None, None]
-    #     xmax = 10000
-    #     vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'effective_lr', 'grad_norm']),)
-    #     p = TimeSeriesPlotter()
-    #     p.plot_from_experiment(exp_file,
-    #                            vars_to_plot=vars_to_plot,
-    #                            ylims=ylims,
-    #                            use_xmax=xmax,
-    #                            fig_inches=(18, 12))
+    # CIFAR Vs5
+    type_codes = ['ad', 'adl', 'adam', 'adaml', 'ag', 'agl', 'sgd', 'lc']
+    draw_legend = False
+    for tc in type_codes:
+        print 'starting plot for', tc
+        exp_file = os.path.join(this_path,
+                                'output/experiments/vs5-%s----2015.06.02.txt' % tc)
+        ylims = [[.19, .35], [1e-2, 1e1], None, None]
+        xmax = 10000
+        vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'effective_lr', 'grad_norm']),)
+        p = TimeSeriesPlotter()
+        p.plot_from_experiment(exp_file,
+                               vars_to_plot=vars_to_plot,
+                               ylims=ylims,
+                               use_xmax=xmax,
+                               draw_legend=draw_legend,
+                               fig_inches=(18, 12))
 
-    # # MnistAutoEncoder Vs20 Cross Entropy Loss
+
+    # # MnistAutoEncoder Vs22 Cross Entropy Loss
     # draw_legend = False
     # type_codes = ['ad', 'adl', 'adam', 'adaml', 'ag', 'agl', 'sgd', 'lc']
     # for tc in type_codes:
     #     print 'starting plot for', tc
     #     exp_file = os.path.join(this_path,
-    #                             'output/experiments/vs20ce-%s----2015.06.01.txt' % tc)
+    #                             'output/experiments/vs22ce-%s----2015.06.02.txt' % tc)
+    #     ylims = [[50, 150], [50, 150], None, None]
+    #     xmax = 2000
+    #     vars_to_plot = (('seconds_seen', ['test_objective', 'train_objective', 'effective_lr', 'grad_norm']),)
+    #     p = TimeSeriesPlotter()
+    #     y_names_2_labels = {
+    #         'test_objective':  ('Testing CE Loss', False) ,
+    #         'train_objective':  ('Training CE Loss', False),
+    #         'effective_lr':     ('Effective Learning Rate', True),
+    #         'grad_norm':        ('Gradient Norm', True),
+    #     }
+    #     p.y_names_2_labels = y_names_2_labels
+    #     p.plot_from_experiment(exp_file,
+    #                            vars_to_plot=vars_to_plot,
+    #                            ylims=ylims,
+    #                            use_xmax=xmax,
+    #                            draw_legend=draw_legend,
+    #                            fig_inches=(18, 12))
+
+
+    # # MnistAutoEncoder Vs20 L2 Loss
+    # draw_legend = False
+    # type_codes = ['ad', 'adl', 'adam', 'adaml', 'ag', 'agl', 'sgd', 'lc']
+    # for tc in type_codes:
+    #     print 'starting plot for', tc
+    #     exp_file = os.path.join(this_path,
+    #                             'output/experiments/vs20)-%s----2015.06.01.txt' % tc)
     #     ylims = [[-40, 0], [50, 150], None, None]
     #     xmax = 2000
     #     vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'effective_lr', 'grad_norm']),)
@@ -822,30 +851,4 @@ if __name__ == '__main__':
     #                            use_xmax=xmax,
     #                            draw_legend=draw_legend,
     #                            fig_inches=(18, 12))
-
-
-    # MnistAutoEncoder Vs20 L2 Loss
-    draw_legend = False
-    type_codes = ['ad', 'adl', 'adam', 'adaml', 'ag', 'agl', 'sgd', 'lc']
-    for tc in type_codes:
-        print 'starting plot for', tc
-        exp_file = os.path.join(this_path,
-                                'output/experiments/vs20)-%s----2015.06.01.txt' % tc)
-        ylims = [[-40, 0], [50, 150], None, None]
-        xmax = 2000
-        vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'effective_lr', 'grad_norm']),)
-        p = TimeSeriesPlotter()
-        y_names_2_labels = {
-            'test_y_misclass':  ('Negative L2 Error', False) ,
-            'train_objective':  ('Cross Entropy Loss', False),
-            'effective_lr':     ('Effective Learning Rate', True),
-            'grad_norm':        ('Gradient Norm', True),
-        }
-        p.y_names_2_labels = y_names_2_labels
-        p.plot_from_experiment(exp_file,
-                               vars_to_plot=vars_to_plot,
-                               ylims=ylims,
-                               use_xmax=xmax,
-                               draw_legend=draw_legend,
-                               fig_inches=(18, 12))
 
