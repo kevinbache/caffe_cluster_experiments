@@ -137,7 +137,7 @@ layer {
 #      type: "gaussian"
 #      std: .01
 #      sparse: ${n_neurons_y_sparse_init}
-      ${weight_fillery}
+      ${weight_filler}
     }
     bias_filler {
       type: "constant"

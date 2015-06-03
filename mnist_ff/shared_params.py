@@ -99,9 +99,9 @@ hyper_params = {
 
     'weight_decay': .0005,
 
-     'weight_filler0': 'type: "gaussian"\n      std: .01\n      sparse: %d' % int(n_neurons_h0 / 10),
-     'weight_filler1': 'type: "gaussian"\n      std: .01\n      sparse: %d' % int(n_neurons_h1 / 10),
-     'weight_fillery': 'type: "gaussian"\n      std: .01\n      sparse: %d' % int(0 / 10),
+    'weight_filler0': 'type: "gaussian"\n      std: .01\n      sparse: %d' % int(n_neurons_h0 / 10),
+    'weight_filler1': 'type: "gaussian"\n      std: .01\n      sparse: %d' % int(n_neurons_h1 / 10),
+    'weight_filler': 'type: "gaussian"\n      std: .01\n      sparse: %d' % int(0 / 10),
 
     'shared_cross_params': {
         # 'weight_filler': ['type: "gaussian"\n      std: 0.001',
