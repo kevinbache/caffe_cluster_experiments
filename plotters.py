@@ -782,15 +782,15 @@ class TimeSeriesPlotter(Plotter):
 
 
 if __name__ == '__main__':
-    # CIFAR Vs5
+    # MNIST Vs30
     type_codes = ['ad', 'adl', 'adam', 'adaml', 'ag', 'agl', 'sgd', 'lc']
     draw_legend = False
     for tc in type_codes:
         print 'starting plot for', tc
         exp_file = os.path.join(this_path,
-                                'output/experiments/vs5-%s----2015.06.02.txt' % tc)
-        ylims = [[.19, .35], [1e-2, 1e1], None, None]
-        xmax = 10000
+                                'output/experiments/vs30-%s----2015.06.04.txt' % tc)
+        ylims = [[.01, .03], None, None, None]
+        xmax = 3000
         vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'effective_lr', 'grad_norm']),)
         p = TimeSeriesPlotter()
         p.plot_from_experiment(exp_file,
@@ -799,6 +799,24 @@ if __name__ == '__main__':
                                use_xmax=xmax,
                                draw_legend=draw_legend,
                                fig_inches=(18, 12))
+
+    # # CIFAR Vs5
+    # type_codes = ['ad', 'adl', 'adam', 'adaml', 'ag', 'agl', 'sgd', 'lc']
+    # draw_legend = False
+    # for tc in type_codes:
+    #     print 'starting plot for', tc
+    #     exp_file = os.path.join(this_path,
+    #                             'output/experiments/vs5-%s----2015.06.02.txt' % tc)
+    #     ylims = [[.19, .35], [1e-2, 1e1], None, None]
+    #     xmax = 10000
+    #     vars_to_plot = (('seconds_seen', ['test_y_misclass', 'train_objective', 'effective_lr', 'grad_norm']),)
+    #     p = TimeSeriesPlotter()
+    #     p.plot_from_experiment(exp_file,
+    #                            vars_to_plot=vars_to_plot,
+    #                            ylims=ylims,
+    #                            use_xmax=xmax,
+    #                            draw_legend=draw_legend,
+    #                            fig_inches=(18, 12))
 
 
     # # MnistAutoEncoder Vs22 Cross Entropy Loss
